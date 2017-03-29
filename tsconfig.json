@@ -1,0 +1,18 @@
+{
+    "compileOnSave": true,
+    "typeAcquisition": {
+        "enable": true
+    },
+    "files": [
+        "./client/index.tsx"
+    ],
+    "compilerOptions": {
+        "target": "es5",
+        "watch": true,
+        "jsx": "react",
+        "module": "amd",
+        "allowJs": true,
+        "outFile": "public/index.js",
+        "sourceMap": false
+    }
+}
