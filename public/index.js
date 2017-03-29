@@ -57,6 +57,26 @@ define("index", ["require", "exports", "react", "react-dom"], function (require,
         };
         return Card;
     }(React.Component));
+    var Player = (function (_super) {
+        __extends(Player, _super);
+        function Player() {
+            return _super !== null && _super.apply(this, arguments) || this;
+        }
+        Player.prototype.render = function () {
+            var nameStyle = {
+                marginLeft: 7
+            };
+            var iconStyle = {
+                fontSize: "16pt",
+                color: "#83b55e"
+            };
+            var _a = this.props, name = _a.name, others = __rest(_a, ["name"]);
+            return (React.createElement("div", __assign({}, others),
+                React.createElement("span", { className: "fa fa-user-circle", style: iconStyle }),
+                React.createElement("span", { style: nameStyle }, name)));
+        };
+        return Player;
+    }(React.Component));
     var Main = (function (_super) {
         __extends(Main, _super);
         function Main() {
@@ -76,6 +96,9 @@ define("index", ["require", "exports", "react", "react-dom"], function (require,
             var playersStyle = {
                 width: 200
             };
+            var playersListStyle = {
+                listStyleType: "none"
+            };
             return (React.createElement("div", null,
                 React.createElement("h1", null, "Team Poker"),
                 React.createElement("div", { style: columnsStyle },
@@ -91,9 +114,11 @@ define("index", ["require", "exports", "react", "react-dom"], function (require,
                             React.createElement("span", { className: "fa fa-coffee" })),
                         React.createElement(Card, null, "?")),
                     React.createElement("div", { style: playersStyle },
-                        React.createElement("ul", null,
-                            React.createElement("li", null, "Joueur 1"),
-                            React.createElement("li", null, "Joueur 2"))))));
+                        React.createElement("ul", { style: playersListStyle },
+                            React.createElement("li", null,
+                                React.createElement(Player, { name: "Joueur 1" })),
+                            React.createElement("li", null,
+                                React.createElement(Player, { name: "Joueur 2" })))))));
         };
         return Main;
     }(React.Component));
