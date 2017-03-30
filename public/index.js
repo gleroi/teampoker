@@ -25,9 +25,10 @@ var __rest = (this && this.__rest) || function (s, e) {
             t[p[i]] = s[p[i]];
     return t;
 };
-define("index", ["require", "exports", "react", "react-dom"], function (require, exports, React, Dom) {
+define("index", ["require", "exports", "react", "react-dom", "socket.io-client"], function (require, exports, React, Dom, io) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    var name = "Joueur 1";
     var Card = (function (_super) {
         __extends(Card, _super);
         function Card() {
@@ -79,9 +80,30 @@ define("index", ["require", "exports", "react", "react-dom"], function (require,
     }(React.Component));
     var Main = (function (_super) {
         __extends(Main, _super);
-        function Main() {
-            return _super !== null && _super.apply(this, arguments) || this;
+        function Main(props, context) {
+            var _this = _super.call(this, props, context) || this;
+            _this.state = {
+                name: name
+            };
+            register(_this);
+            return _this;
         }
+        Main.prototype.onClick = function (val) {
+            return function (e) {
+                vote({ vote: val, player: "name" });
+            };
+        };
+        Main.prototype.changeName = function () {
+            return function (e) {
+                setName(e.currentTarget.value);
+            };
+        };
+        Main.prototype.onUpdate = function () {
+            console.log("updated");
+            this.setState({
+                name: name
+            });
+        };
         Main.prototype.render = function () {
             var columnsStyle = {
                 display: "flex",
@@ -103,24 +125,59 @@ define("index", ["require", "exports", "react", "react-dom"], function (require,
                 React.createElement("h1", null, "Team Poker"),
                 React.createElement("div", { style: columnsStyle },
                     React.createElement("div", { style: cardsStyle },
-                        React.createElement(Card, null, "1"),
-                        React.createElement(Card, null, "2"),
-                        React.createElement(Card, null, "3"),
-                        React.createElement(Card, null, "5"),
-                        React.createElement(Card, null, "8"),
-                        React.createElement(Card, null, "13"),
-                        React.createElement(Card, null, "21"),
-                        React.createElement(Card, null,
+                        React.createElement(Card, { onClick: this.onClick("1") }, "1"),
+                        React.createElement(Card, { onClick: this.onClick("2") }, "2"),
+                        React.createElement(Card, { onClick: this.onClick("3") }, "3"),
+                        React.createElement(Card, { onClick: this.onClick("5") }, "5"),
+                        React.createElement(Card, { onClick: this.onClick("8") }, "8"),
+                        React.createElement(Card, { onClick: this.onClick("13") }, "13"),
+                        React.createElement(Card, { onClick: this.onClick("21") }, "21"),
+                        React.createElement(Card, { onClick: this.onClick("coffee") },
                             React.createElement("span", { className: "fa fa-coffee" })),
-                        React.createElement(Card, null, "?")),
+                        React.createElement(Card, { onClick: this.onClick("?") }, "?")),
                     React.createElement("div", { style: playersStyle },
+                        React.createElement("div", null,
+                            React.createElement("label", null, "Changer de nom :"),
+                            React.createElement("input", { type: "text", onChange: this.changeName() })),
                         React.createElement("ul", { style: playersListStyle },
                             React.createElement("li", null,
-                                React.createElement(Player, { name: "Joueur 1" })),
+                                React.createElement(Player, { name: this.state.name })),
                             React.createElement("li", null,
                                 React.createElement(Player, { name: "Joueur 2" })))))));
         };
         return Main;
     }(React.Component));
+    var ui = [];
     Dom.render(React.createElement(Main, null), document.getElementById("main-container"));
+    var socket = io();
+    function register(obj) {
+        ui.push(obj);
+    }
+    function update() {
+        for (var _i = 0, ui_1 = ui; _i < ui_1.length; _i++) {
+            var obj = ui_1[_i];
+            obj.onUpdate();
+        }
+    }
+    function vote(value) {
+        console.log("my vote:", value);
+        socket.emit("vote", JSON.stringify(value));
+    }
+    socket.on("vote", function (value) {
+        console.log("vote:", value);
+    });
+    function setName(value) {
+        name = value;
+        socket.emit("change_name", value);
+    }
+    socket.on("change_name", function (value) {
+        name = value;
+        update();
+    });
+    socket.on("message", function (value) {
+        console.log("msg:", value);
+    });
+    socket.on("disconnect", function () {
+        console.log("connexion perdue!");
+    });
 });
