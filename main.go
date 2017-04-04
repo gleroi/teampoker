@@ -42,8 +42,9 @@ func main() {
 		so.BroadcastTo("team", "new_player", myID)
 
 		so.On("vote", func(vote string) {
-			log.Printf("vote %s", vote)
-			so.BroadcastTo("team", "vote", vote)
+			log.Printf("vote %d %s", myID, vote)
+			so.Emit("voted", myID, vote)
+			so.BroadcastTo("team", "voted", myID, vote)
 		})
 
 		so.On("change_name", func(name string) {

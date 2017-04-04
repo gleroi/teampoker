@@ -35,7 +35,7 @@ class Card extends React.Component<any, any> {
 }
 
 interface PlayerProps {
-    name: string
+    player: st.Player
 }
 class Player extends React.Component<PlayerProps, any> {
     render() {
@@ -45,15 +45,23 @@ class Player extends React.Component<PlayerProps, any> {
 
         var iconStyle: React.CSSProperties = {
             fontSize: "16pt",
-            color: "#83b55e"
+            color: "#8BC34A"
         };
 
-        var { name, ...others } = this.props;
+        var voteStyle: React.CSSProperties = {
+            fontSize: "16pt",
+            color: "#cddc39",
+            float: "right"
+        };
+
+
+        var { player, ...others } = this.props;
 
         return (
             <div {...others} >
                 <span className="fa fa-user-circle" style={iconStyle} />
-                <span style={nameStyle}>{name}</span>
+                <span style={nameStyle}>{player.name}</span>
+                <span style={voteStyle} className={"fa fa-" + (player.voted ? "thumbs-up" : "commenting")} />
             </div>
         )
     }
@@ -72,7 +80,7 @@ class Main extends React.Component<any, st.State> {
 
     onClick(val) {
         return (e) => {
-            vote({ vote: val, player: "name"});
+            vote(val);
         }
     }
 
@@ -130,7 +138,7 @@ class Main extends React.Component<any, st.State> {
                     <ul style={playersListStyle}>
                         {
                             this.state.players.map(p => (
-                                <li key={p.id} ><Player name={p.id + " : " + p.name} /></li>
+                                <li key={p.id} ><Player player={p} /></li>
                             ))
                         }
                     </ul>
@@ -155,12 +163,11 @@ socket.on("new_player", (id) => {
 })
 
 function vote(value: any) {
-    console.log("my vote:", value);
-    socket.emit("vote", JSON.stringify(value));
+    socket.emit("vote", value);
 }
 
-socket.on("vote", (value) => {
-    console.log("vote:", value)
+socket.on("voted", (id, value) => {
+    store.hasVoted(id, value);
 });
 
 function setName(value: string) {
