@@ -130,7 +130,7 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client",
             };
             var _a = this.props, player = _a.player, others = __rest(_a, ["player"]);
             return (React.createElement("div", __assign({}, others),
-                React.createElement("span", { className: "fa fa-user-circle", style: iconStyle }),
+                React.createElement("span", { className: "fa fa-odnoklassniki-square", style: iconStyle }),
                 React.createElement("span", { style: nameStyle }, player.Name),
                 this.props.voted && (React.createElement("span", { className: "fa fa-thumbs-up", style: voteStyle }))));
         };
@@ -199,6 +199,9 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client",
             ];
             return (React.createElement("div", null,
                 React.createElement("h1", null, "Team Poker"),
+                React.createElement("h3", null,
+                    "Voting for ",
+                    this.state.CurrentRun.Name),
                 React.createElement("div", { style: columnsStyle },
                     React.createElement("div", { style: cardsStyle }, votes.map(function (vote) { return (React.createElement(Card, { onClick: _this.onClick(vote.value), voted: _this.isMyVote(vote.value) }, vote.text)); })),
                     React.createElement("div", { style: playersStyle },
@@ -223,8 +226,16 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client",
     socket.on("disconnect", function () {
         console.log("connexion perdue!");
     });
+
     function vote(value) {
-        socket.emit("vote", value);
+        var state = store.getState();
+        var previousVote = state.CurrentRun.Votes[state.id]
+        if (previousVote != value) {
+            socket.emit("vote", value);
+        }
+        else {
+            socket.emit("vote", "")
+        }
     }
     function setName(value) {
         socket.emit("change_name", value);

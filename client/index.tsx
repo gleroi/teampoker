@@ -64,7 +64,7 @@ class Player extends React.Component<PlayerProps, any> {
 
         return (
             <div {...others} >
-                <span className="fa fa-user-circle" style={iconStyle} />
+                <span className="fa fa-odnoklassniki-square" style={iconStyle} />
                 <span style={nameStyle}>{player.Name}</span>
                 { this.props.voted && (<span className="fa fa-thumbs-up" style={voteStyle} />)}
             </div>
@@ -143,6 +143,8 @@ class Main extends React.Component<any, st.State> {
 
         return (<div>
             <h1>Team Poker</h1>
+
+            <h3>Voting for {this.state.CurrentRun.Name}</h3>
 
             <div style={columnsStyle}>
                 <div style={cardsStyle}>
