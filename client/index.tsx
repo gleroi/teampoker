@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as Dom from "react-dom";
 import * as io from "socket.io-client";
+import * as st from "./store"
 
 var name = "Joueur 1";
 
@@ -58,13 +59,15 @@ class Player extends React.Component<PlayerProps, any> {
     }
 }
 
-class Main extends React.Component<any, any> {
+class Main extends React.Component<any, st.State> {
     constructor(props, context) {
         super(props, context);
-        this.state = {
-            name: name
-        };
-        register(this);
+        this.state = store.getState();
+        store.subscribe(() => this.onChange());
+    }
+
+    onChange() {
+        this.setState(store.getState());
     }
 
     onClick(val) {
@@ -77,13 +80,6 @@ class Main extends React.Component<any, any> {
         return (e : React.ChangeEvent<HTMLInputElement>) => {
             setName(e.currentTarget.value)
         }
-    }
-
-    onUpdate() {
-        console.log("updated")
-        this.setState({
-            name: name
-        });
     }
 
     render() {
@@ -132,8 +128,11 @@ class Main extends React.Component<any, any> {
                         <input type="text" onChange={this.changeName()} />
                     </div>
                     <ul style={playersListStyle}>
-                        <li><Player name={this.state.name} /></li>
-                        <li><Player name="Joueur 2" /></li>
+                        {
+                            this.state.players.map(p => (
+                                <li key={p.id} ><Player name={p.id + " : " + p.name} /></li>
+                            ))
+                        }
                     </ul>
                 </div>
             </div>
@@ -141,20 +140,19 @@ class Main extends React.Component<any, any> {
     }
 }
 
-var ui = []
-Dom.render(<Main/>, document.getElementById("main-container"));
 
 var socket = io();
+var store = new st.Store();
 
-function register(obj) {
-    ui.push(obj)
-}
+Dom.render(<Main/>, document.getElementById("main-container"));
 
-function update() {
-    for (var obj of ui) {
-        obj.onUpdate();
-    }
-}
+socket.on("join", (id) => {
+    store.setId(id);
+})
+
+socket.on("new_player", (id) => {
+    store.addPlayer(id);
+})
 
 function vote(value: any) {
     console.log("my vote:", value);
@@ -166,13 +164,12 @@ socket.on("vote", (value) => {
 });
 
 function setName(value: string) {
-    name = value;
     socket.emit("change_name", value)
 }
 
-socket.on("change_name", (value) => {
-    name = value;
-    update();
+socket.on("name_changed", (id, value) => {
+    console.log("name_changed", id, value)
+    store.setName(id, value);
 });
 
 

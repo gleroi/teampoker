@@ -1,13 +1,8 @@
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
 var __assign = (this && this.__assign) || Object.assign || function(t) {
     for (var s, i = 1, n = arguments.length; i < n; i++) {
         s = arguments[i];
@@ -25,9 +20,58 @@ var __rest = (this && this.__rest) || function (s, e) {
             t[p[i]] = s[p[i]];
     return t;
 };
-define("index", ["require", "exports", "react", "react-dom", "socket.io-client"], function (require, exports, React, Dom, io) {
+define("store", ["require", "exports"], function (require, exports) {
     "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
+    var State = (function () {
+        function State() {
+            this.players = [];
+        }
+        return State;
+    }());
+    exports.State = State;
+    var Store = (function () {
+        function Store() {
+            this.callbacks = [];
+            this.state = new State();
+        }
+        Store.prototype.subscribe = function (cb) {
+            this.callbacks.push(cb);
+        };
+        Store.prototype.raise = function () {
+            for (var _i = 0, _a = this.callbacks; _i < _a.length; _i++) {
+                var cb = _a[_i];
+                cb();
+            }
+        };
+        Store.prototype.getState = function () {
+            return this.state;
+        };
+        Store.prototype.addPlayer = function (id) {
+            console.log("addPlayer", id);
+            this.state.players[id] = { id: id, name: "other" };
+            this.raise();
+        };
+        Store.prototype.setId = function (id) {
+            console.log("setId", id);
+            this.state.id = id;
+            this.addPlayer(id);
+        };
+        Store.prototype.setName = function (id, value) {
+            console.log("setName", id, value);
+            var player = this.state.players[id];
+            if (!player) {
+                this.addPlayer(id);
+                player = this.state.players[id];
+            }
+            player.name = value;
+            this.raise();
+        };
+        return Store;
+    }());
+    exports.Store = Store;
+});
+define("index", ["require", "exports", "react", "react-dom", "socket.io-client", "store"], function (require, exports, React, Dom, io, st) {
+    "use strict";
     var name = "Joueur 1";
     var Card = (function (_super) {
         __extends(Card, _super);
@@ -82,12 +126,13 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client"]
         __extends(Main, _super);
         function Main(props, context) {
             var _this = _super.call(this, props, context) || this;
-            _this.state = {
-                name: name
-            };
-            register(_this);
+            _this.state = store.getState();
+            store.subscribe(function () { return _this.onChange(); });
             return _this;
         }
+        Main.prototype.onChange = function () {
+            this.setState(store.getState());
+        };
         Main.prototype.onClick = function (val) {
             return function (e) {
                 vote({ vote: val, player: "name" });
@@ -97,12 +142,6 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client"]
             return function (e) {
                 setName(e.currentTarget.value);
             };
-        };
-        Main.prototype.onUpdate = function () {
-            console.log("updated");
-            this.setState({
-                name: name
-            });
         };
         Main.prototype.render = function () {
             var columnsStyle = {
@@ -139,26 +178,20 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client"]
                         React.createElement("div", null,
                             React.createElement("label", null, "Changer de nom :"),
                             React.createElement("input", { type: "text", onChange: this.changeName() })),
-                        React.createElement("ul", { style: playersListStyle },
-                            React.createElement("li", null,
-                                React.createElement(Player, { name: this.state.name })),
-                            React.createElement("li", null,
-                                React.createElement(Player, { name: "Joueur 2" })))))));
+                        React.createElement("ul", { style: playersListStyle }, this.state.players.map(function (p) { return (React.createElement("li", { key: p.id },
+                            React.createElement(Player, { name: p.id + " : " + p.name }))); }))))));
         };
         return Main;
     }(React.Component));
-    var ui = [];
-    Dom.render(React.createElement(Main, null), document.getElementById("main-container"));
     var socket = io();
-    function register(obj) {
-        ui.push(obj);
-    }
-    function update() {
-        for (var _i = 0, ui_1 = ui; _i < ui_1.length; _i++) {
-            var obj = ui_1[_i];
-            obj.onUpdate();
-        }
-    }
+    var store = new st.Store();
+    Dom.render(React.createElement(Main, null), document.getElementById("main-container"));
+    socket.on("join", function (id) {
+        store.setId(id);
+    });
+    socket.on("new_player", function (id) {
+        store.addPlayer(id);
+    });
     function vote(value) {
         console.log("my vote:", value);
         socket.emit("vote", JSON.stringify(value));
@@ -167,12 +200,11 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client"]
         console.log("vote:", value);
     });
     function setName(value) {
-        name = value;
         socket.emit("change_name", value);
     }
-    socket.on("change_name", function (value) {
-        name = value;
-        update();
+    socket.on("name_changed", function (id, value) {
+        console.log("name_changed", id, value);
+        store.setName(id, value);
     });
     socket.on("message", function (value) {
         console.log("msg:", value);

@@ -9,7 +9,19 @@ import (
 
 var id int
 
+type Player struct {
+	id   int
+	name string
+}
+
+var players []Player
+
+func addPlayer(id int) {
+	players = append(players, Player{id: id})
+}
+
 func main() {
+	players = make([]Player, 0, 16)
 
 	server, err := socketio.NewServer(nil)
 	if err != nil {
@@ -19,10 +31,15 @@ func main() {
 	server.On("connection", func(so socketio.Socket) {
 		log.Printf("Connection\n")
 		so.Join("team")
-		id++
 		var myID = id
+		id++
 
-		so.Emit("message", myID)
+		so.Emit("join", myID)
+		for _, player := range players {
+			so.Emit("new_player", player.id)
+		}
+		addPlayer(myID)
+		so.BroadcastTo("team", "new_player", myID)
 
 		so.On("vote", func(vote string) {
 			log.Printf("vote %s", vote)
@@ -30,8 +47,9 @@ func main() {
 		})
 
 		so.On("change_name", func(name string) {
-			log.Printf("setName %s\n", name)
-			so.BroadcastTo("team", "change_name", name)
+			log.Printf("setName %d %s\n", myID, name)
+			so.Emit("name_changed", myID, name)
+			so.BroadcastTo("team", "name_changed", myID, name)
 		})
 
 		so.On("disconnection", func() {
