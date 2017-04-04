@@ -54,7 +54,6 @@ class Player extends React.Component<PlayerProps, any> {
             float: "right"
         };
 
-
         var { player, ...others } = this.props;
 
         return (
