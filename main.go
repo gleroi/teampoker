@@ -4,24 +4,25 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gleroi/teampoker/poker"
+
 	"github.com/googollee/go-socket.io"
 )
 
-var id int
-
-type Player struct {
-	id   int
-	name string
-}
-
-var players []Player
-
-func addPlayer(id int) {
-	players = append(players, Player{id: id})
+func sendState(so socketio.Socket, poker *poker.Session) {
+	err := so.Emit("state", poker)
+	if err != nil {
+		log.Printf("sendState failed: %s\n", err)
+	}
+	err = so.BroadcastTo("team", "state", poker)
+	if err != nil {
+		log.Printf("sendState failed: %s\n", err)
+	}
+	log.Printf("state sended")
 }
 
 func main() {
-	players = make([]Player, 0, 16)
+	poker := poker.NewSession()
 
 	server, err := socketio.NewServer(nil)
 	if err != nil {
@@ -30,27 +31,23 @@ func main() {
 
 	server.On("connection", func(so socketio.Socket) {
 		log.Printf("Connection\n")
-		so.Join("team")
-		var myID = id
-		id++
 
-		so.Emit("join", myID)
-		for _, player := range players {
-			so.Emit("new_player", player.id)
-		}
-		addPlayer(myID)
-		so.BroadcastTo("team", "new_player", myID)
+		player := poker.NewPlayer()
+		so.Join("team")
+
+		so.Emit("join", player.Id)
+		sendState(so, poker)
 
 		so.On("vote", func(vote string) {
-			log.Printf("vote %d %s", myID, vote)
-			so.Emit("voted", myID, vote)
-			so.BroadcastTo("team", "voted", myID, vote)
+			poker.Record(player, vote)
+			log.Printf("vote %d %s", player.Id, vote)
+			sendState(so, poker)
 		})
 
 		so.On("change_name", func(name string) {
-			log.Printf("setName %d %s\n", myID, name)
-			so.Emit("name_changed", myID, name)
-			so.BroadcastTo("team", "name_changed", myID, name)
+			log.Printf("setName %d %s\n", player.Id, name)
+			player.ChangeName(name)
+			sendState(so, poker)
 		})
 
 		so.On("disconnection", func() {

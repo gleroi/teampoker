@@ -3,8 +3,6 @@ import * as Dom from "react-dom";
 import * as io from "socket.io-client";
 import * as st from "./store"
 
-var name = "Joueur 1";
-
 class Card extends React.Component<any, any> {
     render() {
         var cardStyle: React.CSSProperties = {
@@ -16,7 +14,7 @@ class Card extends React.Component<any, any> {
             borderRadius: 5,
             margin: 5
         }
-
+       
         var cardTextStyle: React.CSSProperties = {
             verticalAlign: "middle",
             marginTop: 60,
@@ -25,6 +23,12 @@ class Card extends React.Component<any, any> {
             fontFamily: "sans-serif",
             color: "#333333"
         }
+
+         if (this.props.voted) {
+            cardStyle.backgroundColor = "#CDDC39";
+            cardTextStyle.color = "white";
+        }
+
 
         var { children, ...others } = this.props;
 
@@ -36,7 +40,9 @@ class Card extends React.Component<any, any> {
 
 interface PlayerProps {
     player: st.Player
+    voted: boolean
 }
+
 class Player extends React.Component<PlayerProps, any> {
     render() {
         var nameStyle: React.CSSProperties = {
@@ -59,8 +65,8 @@ class Player extends React.Component<PlayerProps, any> {
         return (
             <div {...others} >
                 <span className="fa fa-user-circle" style={iconStyle} />
-                <span style={nameStyle}>{player.name}</span>
-                <span style={voteStyle} className={"fa fa-" + (player.voted ? "thumbs-up" : "commenting")} />
+                <span style={nameStyle}>{player.Name}</span>
+                { this.props.voted && (<span className="fa fa-thumbs-up" style={voteStyle} />)}
             </div>
         )
     }
@@ -89,6 +95,19 @@ class Main extends React.Component<any, st.State> {
         }
     }
 
+    isMyVote(vote: string) : boolean {
+        var myVote = this.state.CurrentRun.Votes[this.state.id];
+        if (myVote) {
+            return myVote == vote;
+        }
+        return false;
+    }
+
+    hasVoted(id: number) : boolean {
+        var myVote = this.state.CurrentRun.Votes[id];
+        return myVote != undefined && myVote != null && myVote != "";
+    }
+
     render() {
 
         var columnsStyle: React.CSSProperties = {
@@ -111,22 +130,27 @@ class Main extends React.Component<any, st.State> {
             listStyleType: "none"
         }
 
+        var votes = [ 
+            { value: "1", text: "1"},
+            { value: "2", text: "2"},
+            { value: "3", text: "3"},
+            { value: "5", text: "5"},
+            { value: "8", text: "8"},
+            { value: "13", text: "13"},
+            { value: "21", text: "21"},
+            { value: "coffee", text: <span className="fa fa-coffee" />},
+            { value: "?", text: "?"}];
+
         return (<div>
             <h1>Team Poker</h1>
 
             <div style={columnsStyle}>
                 <div style={cardsStyle}>
-
-                    <Card onClick={this.onClick("1")}>1</Card>
-                    <Card onClick={this.onClick("2")}>2</Card>
-                    <Card onClick={this.onClick("3")}>3</Card>
-                    <Card onClick={this.onClick("5")}>5</Card>
-                    <Card onClick={this.onClick("8")}>8</Card>
-                    <Card onClick={this.onClick("13")}>13</Card>
-                    <Card onClick={this.onClick("21")}>21</Card>
-                    <Card onClick={this.onClick("coffee")}><span className="fa fa-coffee"></span></Card>
-                    <Card onClick={this.onClick("?")}>?</Card>
-
+                    {
+                        votes.map(vote => (
+                            <Card onClick={this.onClick(vote.value)} voted={this.isMyVote(vote.value)}>{vote.text}</Card>
+                        ))
+                    }
                 </div>
 
                 <div style={playersStyle}>
@@ -136,8 +160,8 @@ class Main extends React.Component<any, st.State> {
                     </div>
                     <ul style={playersListStyle}>
                         {
-                            this.state.players.map(p => (
-                                <li key={p.id} ><Player player={p} /></li>
+                            this.state.Players.map(p => (
+                                <li key={p.Id} ><Player player={p} voted={this.hasVoted(p.Id)} /></li>
                             ))
                         }
                     </ul>
@@ -157,32 +181,19 @@ socket.on("join", (id) => {
     store.setId(id);
 })
 
-socket.on("new_player", (id) => {
-    store.addPlayer(id);
-})
+socket.on("state", (state) => {
+    console.log("state", state)
+    store.setState(state)
+});
+
+socket.on("disconnect", ()=> {
+    console.log("connexion perdue!")
+});
 
 function vote(value: any) {
     socket.emit("vote", value);
 }
 
-socket.on("voted", (id, value) => {
-    store.hasVoted(id, value);
-});
-
 function setName(value: string) {
     socket.emit("change_name", value)
 }
-
-socket.on("name_changed", (id, value) => {
-    console.log("name_changed", id, value)
-    store.setName(id, value);
-});
-
-
-socket.on("message", (value) => {
-    console.log("msg:", value)
-});
-
-socket.on("disconnect", ()=> {
-    console.log("connexion perdue!")
-})

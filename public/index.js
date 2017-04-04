@@ -1,8 +1,13 @@
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var __assign = (this && this.__assign) || Object.assign || function(t) {
     for (var s, i = 1, n = arguments.length; i < n; i++) {
         s = arguments[i];
@@ -22,9 +27,19 @@ var __rest = (this && this.__rest) || function (s, e) {
 };
 define("store", ["require", "exports"], function (require, exports) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var Run = (function () {
+        function Run() {
+            this.Name = "def";
+            this.Votes = new Array();
+        }
+        return Run;
+    }());
+    exports.Run = Run;
     var State = (function () {
         function State() {
-            this.players = new Array();
+            this.Players = new Array();
+            this.CurrentRun = new Run();
         }
         return State;
     }());
@@ -46,33 +61,14 @@ define("store", ["require", "exports"], function (require, exports) {
         Store.prototype.getState = function () {
             return this.state;
         };
-        Store.prototype.addPlayer = function (id) {
-            console.log("addPlayer", id);
-            this.state.players[id] = { id: id, name: "other", voted: false };
+        Store.prototype.setState = function (state) {
+            this.state.Players = state.Players;
+            this.state.CurrentRun = state.CurrentRun;
             this.raise();
         };
         Store.prototype.setId = function (id) {
             console.log("setId", id);
             this.state.id = id;
-            this.addPlayer(id);
-        };
-        Store.prototype.setName = function (id, value) {
-            console.log("setName", id, value);
-            var player = this.state.players[id];
-            if (!player) {
-                this.addPlayer(id);
-                player = this.state.players[id];
-            }
-            player.name = value;
-            this.raise();
-        };
-        Store.prototype.hasVoted = function (id, value) {
-            console.log("hasVoted", id, value);
-            var player = this.state.players[id];
-            if (player) {
-                player.voted = true;
-            }
-            this.raise();
         };
         return Store;
     }());
@@ -80,7 +76,7 @@ define("store", ["require", "exports"], function (require, exports) {
 });
 define("index", ["require", "exports", "react", "react-dom", "socket.io-client", "store"], function (require, exports, React, Dom, io, st) {
     "use strict";
-    var name = "Joueur 1";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var Card = (function (_super) {
         __extends(Card, _super);
         function Card() {
@@ -104,6 +100,10 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client",
                 fontFamily: "sans-serif",
                 color: "#333333"
             };
+            if (this.props.voted) {
+                cardStyle.backgroundColor = "#CDDC39";
+                cardTextStyle.color = "white";
+            }
             var _a = this.props, children = _a.children, others = __rest(_a, ["children"]);
             return (React.createElement("div", __assign({ style: cardStyle }, others),
                 React.createElement("div", { style: cardTextStyle }, children)));
@@ -131,8 +131,8 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client",
             var _a = this.props, player = _a.player, others = __rest(_a, ["player"]);
             return (React.createElement("div", __assign({}, others),
                 React.createElement("span", { className: "fa fa-user-circle", style: iconStyle }),
-                React.createElement("span", { style: nameStyle }, player.name),
-                React.createElement("span", { style: voteStyle, className: "fa fa-" + (player.voted ? "thumbs-up" : "commenting") })));
+                React.createElement("span", { style: nameStyle }, player.Name),
+                this.props.voted && (React.createElement("span", { className: "fa fa-thumbs-up", style: voteStyle }))));
         };
         return Player;
     }(React.Component));
@@ -157,7 +157,19 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client",
                 setName(e.currentTarget.value);
             };
         };
+        Main.prototype.isMyVote = function (vote) {
+            var myVote = this.state.CurrentRun.Votes[this.state.id];
+            if (myVote) {
+                return myVote == vote;
+            }
+            return false;
+        };
+        Main.prototype.hasVoted = function (id) {
+            var myVote = this.state.CurrentRun.Votes[id];
+            return myVote != undefined && myVote != null && myVote != "";
+        };
         Main.prototype.render = function () {
+            var _this = this;
             var columnsStyle = {
                 display: "flex",
                 flexDirection: "row",
@@ -174,26 +186,27 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client",
             var playersListStyle = {
                 listStyleType: "none"
             };
+            var votes = [
+                { value: "1", text: "1" },
+                { value: "2", text: "2" },
+                { value: "3", text: "3" },
+                { value: "5", text: "5" },
+                { value: "8", text: "8" },
+                { value: "13", text: "13" },
+                { value: "21", text: "21" },
+                { value: "coffee", text: React.createElement("span", { className: "fa fa-coffee" }) },
+                { value: "?", text: "?" }
+            ];
             return (React.createElement("div", null,
                 React.createElement("h1", null, "Team Poker"),
                 React.createElement("div", { style: columnsStyle },
-                    React.createElement("div", { style: cardsStyle },
-                        React.createElement(Card, { onClick: this.onClick("1") }, "1"),
-                        React.createElement(Card, { onClick: this.onClick("2") }, "2"),
-                        React.createElement(Card, { onClick: this.onClick("3") }, "3"),
-                        React.createElement(Card, { onClick: this.onClick("5") }, "5"),
-                        React.createElement(Card, { onClick: this.onClick("8") }, "8"),
-                        React.createElement(Card, { onClick: this.onClick("13") }, "13"),
-                        React.createElement(Card, { onClick: this.onClick("21") }, "21"),
-                        React.createElement(Card, { onClick: this.onClick("coffee") },
-                            React.createElement("span", { className: "fa fa-coffee" })),
-                        React.createElement(Card, { onClick: this.onClick("?") }, "?")),
+                    React.createElement("div", { style: cardsStyle }, votes.map(function (vote) { return (React.createElement(Card, { onClick: _this.onClick(vote.value), voted: _this.isMyVote(vote.value) }, vote.text)); })),
                     React.createElement("div", { style: playersStyle },
                         React.createElement("div", null,
                             React.createElement("label", null, "Changer de nom :"),
                             React.createElement("input", { type: "text", onChange: this.changeName() })),
-                        React.createElement("ul", { style: playersListStyle }, this.state.players.map(function (p) { return (React.createElement("li", { key: p.id },
-                            React.createElement(Player, { player: p }))); }))))));
+                        React.createElement("ul", { style: playersListStyle }, this.state.Players.map(function (p) { return (React.createElement("li", { key: p.Id },
+                            React.createElement(Player, { player: p, voted: _this.hasVoted(p.Id) }))); }))))));
         };
         return Main;
     }(React.Component));
@@ -203,26 +216,17 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client",
     socket.on("join", function (id) {
         store.setId(id);
     });
-    socket.on("new_player", function (id) {
-        store.addPlayer(id);
-    });
-    function vote(value) {
-        socket.emit("vote", value);
-    }
-    socket.on("voted", function (id, value) {
-        store.hasVoted(id, value);
-    });
-    function setName(value) {
-        socket.emit("change_name", value);
-    }
-    socket.on("name_changed", function (id, value) {
-        console.log("name_changed", id, value);
-        store.setName(id, value);
-    });
-    socket.on("message", function (value) {
-        console.log("msg:", value);
+    socket.on("state", function (state) {
+        console.log("state", state);
+        store.setState(state);
     });
     socket.on("disconnect", function () {
         console.log("connexion perdue!");
     });
+    function vote(value) {
+        socket.emit("vote", value);
+    }
+    function setName(value) {
+        socket.emit("change_name", value);
+    }
 });
