@@ -1,8 +1,13 @@
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var __assign = (this && this.__assign) || Object.assign || function(t) {
     for (var s, i = 1, n = arguments.length; i < n; i++) {
         s = arguments[i];
@@ -22,6 +27,7 @@ var __rest = (this && this.__rest) || function (s, e) {
 };
 define("store", ["require", "exports"], function (require, exports) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var Run = (function () {
         function Run() {
             this.Votes = new Array();
@@ -77,6 +83,7 @@ define("store", ["require", "exports"], function (require, exports) {
 });
 define("index", ["require", "exports", "react", "react-dom", "socket.io-client", "store"], function (require, exports, React, Dom, io, st) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var Card = (function (_super) {
         __extends(Card, _super);
         function Card() {
@@ -251,7 +258,7 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client",
                 React.createElement("h3", null, item ? ("Voting for " + item.Name) : "Nothing to vote"),
                 React.createElement("div", null,
                     React.createElement("button", { onClick: function (e) { return _this.closeVote(); } }, "Close vote"),
-                    React.createElement("button", { onClick: function (e) { return _this.resetVote(); } }, "Rerun vote")),
+                    React.createElement("button", { onClick: function (e) { return _this.resetVote(); } }, "Reset vote")),
                 React.createElement("div", { style: columnsStyle },
                     React.createElement("div", null,
                         React.createElement("div", { style: cardsStyle }, votes.map(function (vote) { return (React.createElement(Card, { key: "card-" + vote.value, onClick: _this.onClickVote(vote.value), voted: _this.isMyVote(vote.value) }, vote.text)); })),

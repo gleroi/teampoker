@@ -6,6 +6,12 @@ import (
 
 	"github.com/gleroi/teampoker/poker"
 
+	"time"
+
+	"strconv"
+
+	"fmt"
+
 	"github.com/googollee/go-socket.io"
 )
 
@@ -28,13 +34,24 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	server.SetPingInterval(5 * time.Second)
+	server.SetPingTimeout(10 * time.Second)
 
 	server.On("connection", func(so socketio.Socket) {
-		log.Printf("Connection\n")
+		cookie, err := so.Request().Cookie("poker")
+		if err != nil {
+			log.Printf("error: %s", err)
+			return
+		}
+		id, err := strconv.Atoi(cookie.Value)
+		if err != nil {
+			log.Printf("error: %s", err)
+		}
 
-		player := poker.NewPlayer()
+		player := poker.NewPlayer(id)
+		log.Printf("Connection %s %d\n", so.Id(), player.Id)
+
 		so.Join("team")
-
 		so.Emit("join", player.Id)
 		sendState(so, poker)
 
@@ -51,6 +68,11 @@ func main() {
 		})
 
 		so.On("reset_vote", func() {
+			defer func() {
+				if err := recover(); err != nil {
+					log.Printf("Recovering ! %s", err)
+				}
+			}()
 			poker.ResetVote()
 			log.Printf("reset_vote %d", player.Id)
 			sendState(so, poker)
@@ -81,16 +103,29 @@ func main() {
 				log.Printf("sendState failed: %s\n", err)
 			}
 			log.Printf("state sended")
-			log.Printf("Bye %d!\n", player.Id)
+			log.Printf("Bye %s %d!\n", so.Id(), player.Id)
 		})
 	})
 	server.On("error", func(so socketio.Socket, err error) {
 		log.Println("error:", err)
 	})
 
-	http.Handle("/socket.io/", server)
-	http.Handle("/", http.FileServer(http.Dir("public")))
+	dir := http.FileServer(http.Dir("public"))
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		_, err := r.Cookie("poker")
+		if err != nil {
+			log.Printf("error /: %s", err)
+			http.SetCookie(w, &http.Cookie{
+				Name:    "poker",
+				Expires: time.Now().Add(24 * time.Hour),
+				Value:   fmt.Sprintf("%d", poker.NewId()),
+			})
+		}
+		dir.ServeHTTP(w, r)
+	}
 
+	http.Handle("/socket.io/", server)
+	http.HandleFunc("/", handler)
 	log.Println("Listening on localhost:8080...")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

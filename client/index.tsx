@@ -204,7 +204,7 @@ class Main extends React.Component<any, { state: st.State, itemName: string }> {
 
             <div>
                 <button onClick={(e) => this.closeVote()}>Close vote</button>
-                <button onClick={(e) => this.resetVote()}>Rerun vote</button>
+                <button onClick={(e) => this.resetVote()}>Reset vote</button>
             </div>
 
             <div style={columnsStyle}>

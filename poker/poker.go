@@ -4,22 +4,12 @@ package poker
 import "sync"
 import "fmt"
 
-var globalIDMutex = sync.Mutex{}
-var globalID int
-
-func nextID() int {
-	globalIDMutex.Lock()
-	defer globalIDMutex.Unlock()
-	ID := globalID
-	globalID++
-	return ID
-}
-
 // Session for a poker planning
 type Session struct {
 	Players    map[int]*Player
 	Items      []*Item
 	CurrentRun Run
+	mutex      sync.Mutex
 }
 
 // Player is a participant in the poker planning session
@@ -39,6 +29,16 @@ type Run struct {
 	Votes map[int]string
 }
 
+var globalID int
+
+func (poker *Session) NewId() int {
+	poker.mutex.Lock()
+	defer poker.mutex.Unlock()
+	ID := globalID
+	globalID++
+	return ID
+}
+
 // NewSession initializes a new poker planning session
 func NewSession() *Session {
 	poker := Session{
@@ -53,22 +53,34 @@ func NewSession() *Session {
 }
 
 // NewPlayer creates a player and add it to the poker planning session
-func (poker *Session) NewPlayer() *Player {
-	p := Player{
-		Id:   nextID(),
-		Name: "default",
+func (poker *Session) NewPlayer(id int) *Player {
+	poker.mutex.Lock()
+	defer poker.mutex.Unlock()
+
+	p := poker.Players[id]
+	if p == nil {
+		p = &Player{
+			Id:   id,
+			Name: "default",
+		}
+		poker.Players[p.Id] = p
 	}
-	poker.Players[p.Id] = &p
 	poker.CurrentRun.Votes[p.Id] = ""
-	return &p
+	return p
 }
 
 func (poker *Session) RemovePlayer(p *Player) {
+	poker.mutex.Lock()
+	defer poker.mutex.Unlock()
+
 	delete(poker.Players, p.Id)
 	delete(poker.CurrentRun.Votes, p.Id)
 }
 
 func (poker *Session) AddItem(item string) {
+	poker.mutex.Lock()
+	defer poker.mutex.Unlock()
+
 	poker.Items = append(poker.Items, &Item{
 		Name:   item,
 		Result: "",
@@ -76,6 +88,9 @@ func (poker *Session) AddItem(item string) {
 }
 
 func (poker *Session) RunVote(id int) error {
+	poker.mutex.Lock()
+	defer poker.mutex.Unlock()
+
 	if id >= len(poker.Items) {
 		return fmt.Errorf("item %d does not exists", id)
 	}
@@ -87,10 +102,16 @@ func (poker *Session) RunVote(id int) error {
 }
 
 func (poker *Session) Record(player *Player, vote string) {
+	poker.mutex.Lock()
+	defer poker.mutex.Unlock()
+
 	poker.CurrentRun.Votes[player.Id] = vote
 }
 
 func (poker *Session) ResetVote() {
+	poker.mutex.Lock()
+	defer poker.mutex.Unlock()
+
 	poker.CurrentRun.Votes = make(map[int]string)
 	for _, p := range poker.Players {
 		poker.CurrentRun.Votes[p.Id] = ""
@@ -100,6 +121,9 @@ func (poker *Session) ResetVote() {
 }
 
 func (poker *Session) CloseVote() {
+	poker.mutex.Lock()
+	defer poker.mutex.Unlock()
+
 	if poker.CurrentRun.Item == nil {
 		return
 	}
