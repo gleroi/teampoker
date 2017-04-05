@@ -2,6 +2,7 @@
 package poker
 
 import "sync"
+import "fmt"
 
 var globalIDMutex = sync.Mutex{}
 var globalID int
@@ -16,7 +17,8 @@ func nextID() int {
 
 // Session for a poker planning
 type Session struct {
-	Players    []*Player
+	Players    map[int]*Player
+	Items      []*Item
 	CurrentRun Run
 }
 
@@ -26,18 +28,25 @@ type Player struct {
 	Name string
 }
 
+type Item struct {
+	Name     string
+	Result   string
+	Historic map[int]string
+}
+
 type Run struct {
-	Name  string
-	Votes []string
+	Item  *Item
+	Votes map[int]string
 }
 
 // NewSession initializes a new poker planning session
 func NewSession() *Session {
 	poker := Session{
-		Players: make([]*Player, 0, 8),
+		Players: make(map[int]*Player),
+		Items:   make([]*Item, 0, 32),
 		CurrentRun: Run{
-			Name:  "OSAK-96",
-			Votes: make([]string, 0, 8),
+			Item:  nil,
+			Votes: make(map[int]string),
 		},
 	}
 	return &poker
@@ -49,14 +58,61 @@ func (poker *Session) NewPlayer() *Player {
 		Id:   nextID(),
 		Name: "default",
 	}
-	poker.Players = append(poker.Players, &p)
-	poker.CurrentRun.Votes = append(poker.CurrentRun.Votes, "")
+	poker.Players[p.Id] = &p
+	poker.CurrentRun.Votes[p.Id] = ""
 	return &p
 }
 
-func (poker *Session) Record(player *Player, vote string) error {
-	poker.CurrentRun.Votes[player.Id] = vote
+func (poker *Session) RemovePlayer(p *Player) {
+	delete(poker.Players, p.Id)
+	delete(poker.CurrentRun.Votes, p.Id)
+}
+
+func (poker *Session) AddItem(item string) {
+	poker.Items = append(poker.Items, &Item{
+		Name:   item,
+		Result: "",
+	})
+}
+
+func (poker *Session) RunVote(id int) error {
+	if id >= len(poker.Items) {
+		return fmt.Errorf("item %d does not exists", id)
+	}
+	poker.CurrentRun = Run{
+		Item:  poker.Items[id],
+		Votes: make(map[int]string),
+	}
 	return nil
+}
+
+func (poker *Session) Record(player *Player, vote string) {
+	poker.CurrentRun.Votes[player.Id] = vote
+}
+
+func (poker *Session) ResetVote() {
+	poker.CurrentRun.Votes = make(map[int]string)
+	poker.CurrentRun.Item.Result = ""
+	poker.CurrentRun.Item.Historic = nil
+}
+
+func (poker *Session) CloseVote() {
+	if poker.CurrentRun.Item == nil {
+		return
+	}
+	result := make(map[string]int)
+	for _, vote := range poker.CurrentRun.Votes {
+		result[vote] = result[vote] + 1
+	}
+	var selectedCount int
+	var selectedVote string
+	for vote, count := range result {
+		if count >= selectedCount {
+			selectedVote = vote
+		}
+	}
+	poker.CurrentRun.Item.Result = selectedVote
+	poker.CurrentRun.Item.Historic = poker.CurrentRun.Votes
 }
 
 func (p *Player) ChangeName(name string) {

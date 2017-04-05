@@ -1,13 +1,8 @@
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
 var __assign = (this && this.__assign) || Object.assign || function(t) {
     for (var s, i = 1, n = arguments.length; i < n; i++) {
         s = arguments[i];
@@ -27,18 +22,23 @@ var __rest = (this && this.__rest) || function (s, e) {
 };
 define("store", ["require", "exports"], function (require, exports) {
     "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
     var Run = (function () {
         function Run() {
-            this.Name = "def";
             this.Votes = new Array();
         }
         return Run;
     }());
     exports.Run = Run;
+    var Item = (function () {
+        function Item() {
+        }
+        return Item;
+    }());
+    exports.Item = Item;
     var State = (function () {
         function State() {
             this.Players = new Array();
+            this.Items = new Array();
             this.CurrentRun = new Run();
         }
         return State;
@@ -64,6 +64,7 @@ define("store", ["require", "exports"], function (require, exports) {
         Store.prototype.setState = function (state) {
             this.state.Players = state.Players;
             this.state.CurrentRun = state.CurrentRun;
+            this.state.Items = state.Items;
             this.raise();
         };
         Store.prototype.setId = function (id) {
@@ -76,7 +77,6 @@ define("store", ["require", "exports"], function (require, exports) {
 });
 define("index", ["require", "exports", "react", "react-dom", "socket.io-client", "store"], function (require, exports, React, Dom, io, st) {
     "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
     var Card = (function (_super) {
         __extends(Card, _super);
         function Card() {
@@ -100,11 +100,11 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client",
                 fontFamily: "sans-serif",
                 color: "#333333"
             };
-            if (this.props.voted) {
+            var _a = this.props, children = _a.children, voted = _a.voted, others = __rest(_a, ["children", "voted"]);
+            if (voted) {
                 cardStyle.backgroundColor = "#CDDC39";
                 cardTextStyle.color = "white";
             }
-            var _a = this.props, children = _a.children, others = __rest(_a, ["children"]);
             return (React.createElement("div", __assign({ style: cardStyle }, others),
                 React.createElement("div", { style: cardTextStyle }, children)));
         };
@@ -128,11 +128,11 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client",
                 color: "#cddc39",
                 float: "right"
             };
-            var _a = this.props, player = _a.player, others = __rest(_a, ["player"]);
+            var _a = this.props, player = _a.player, voted = _a.voted, others = __rest(_a, ["player", "voted"]);
             return (React.createElement("div", __assign({}, others),
                 React.createElement("span", { className: "fa fa-odnoklassniki-square", style: iconStyle }),
                 React.createElement("span", { style: nameStyle }, player.Name),
-                this.props.voted && (React.createElement("span", { className: "fa fa-thumbs-up", style: voteStyle }))));
+                voted && (React.createElement("span", { className: "fa fa-thumbs-up", style: voteStyle }))));
         };
         return Player;
     }(React.Component));
@@ -140,17 +140,34 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client",
         __extends(Main, _super);
         function Main(props, context) {
             var _this = _super.call(this, props, context) || this;
-            _this.state = store.getState();
+            _this.state = { state: store.getState(), itemName: "" };
             store.subscribe(function () { return _this.onChange(); });
             return _this;
         }
         Main.prototype.onChange = function () {
-            this.setState(store.getState());
+            this.setState(function (prev, props) {
+                return {
+                    state: store.getState(),
+                    itemName: prev.itemName,
+                };
+            });
         };
-        Main.prototype.onClick = function (val) {
+        Main.prototype.onItemNameChange = function (e) {
+            var val = e.target.value;
+            this.setState(function (prev, props) {
+                return {
+                    state: prev.state,
+                    itemName: val
+                };
+            });
+        };
+        Main.prototype.onClickVote = function (val) {
             return function (e) {
                 vote(val);
             };
+        };
+        Main.prototype.onClickAddItem = function (itemName) {
+            addItem(itemName);
         };
         Main.prototype.changeName = function () {
             return function (e) {
@@ -158,15 +175,24 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client",
             };
         };
         Main.prototype.isMyVote = function (vote) {
-            var myVote = this.state.CurrentRun.Votes[this.state.id];
+            var myVote = this.state.state.CurrentRun.Votes[this.state.state.id];
             if (myVote) {
                 return myVote == vote;
             }
             return false;
         };
         Main.prototype.hasVoted = function (id) {
-            var myVote = this.state.CurrentRun.Votes[id];
+            var myVote = this.state.state.CurrentRun.Votes[id];
             return myVote != undefined && myVote != null && myVote != "";
+        };
+        Main.prototype.runVote = function (index) {
+            runVote(index);
+        };
+        Main.prototype.closeVote = function () {
+            closeVote();
+        };
+        Main.prototype.resetVote = function () {
+            resetVote();
         };
         Main.prototype.render = function () {
             var _this = this;
@@ -180,11 +206,14 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client",
                 flexDirection: "row",
                 flexWrap: "wrap"
             };
-            var playersStyle = {
-                width: 200
+            var playerStyle = {
+                width: 175
             };
             var playersListStyle = {
-                listStyleType: "none"
+                listStyleType: "none",
+                width: 200,
+                padding: 0,
+                margin: "10px 0 0 0 "
             };
             var votes = [
                 { value: "1", text: "1" },
@@ -197,19 +226,45 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client",
                 { value: "coffee", text: React.createElement("span", { className: "fa fa-coffee" }) },
                 { value: "?", text: "?" }
             ];
+            var players = [];
+            for (var id in this.state.state.Players) {
+                var p = this.state.state.Players[id];
+                players.push(React.createElement("li", { key: "player" + p.Id, style: playerStyle },
+                    React.createElement(Player, { player: p, voted: this.hasVoted(p.Id) })));
+            }
+            var item = this.state.state.CurrentRun.Item;
             return (React.createElement("div", null,
                 React.createElement("h1", null, "Team Poker"),
-                React.createElement("h3", null,
-                    "Voting for ",
-                    this.state.CurrentRun.Name),
+                React.createElement("h3", null, item ? ("Voting for " + item.Name) : "Nothing to vote"),
+                React.createElement("div", null,
+                    React.createElement("button", { onClick: function (e) { return _this.closeVote(); } }, "Close vote"),
+                    React.createElement("button", { onClick: function (e) { return _this.resetVote(); } }, "Rerun vote")),
                 React.createElement("div", { style: columnsStyle },
-                    React.createElement("div", { style: cardsStyle }, votes.map(function (vote) { return (React.createElement(Card, { onClick: _this.onClick(vote.value), voted: _this.isMyVote(vote.value) }, vote.text)); })),
-                    React.createElement("div", { style: playersStyle },
+                    React.createElement("div", null,
+                        React.createElement("div", { style: cardsStyle }, votes.map(function (vote) { return (React.createElement(Card, { key: "card-" + vote.value, onClick: _this.onClickVote(vote.value), voted: _this.isMyVote(vote.value) }, vote.text)); })),
+                        React.createElement("div", null,
+                            React.createElement("h2", null, "Tasks"),
+                            React.createElement("div", null,
+                                React.createElement("label", null, "Task \u00A0"),
+                                React.createElement("input", { type: "text", size: 60, value: this.state.itemName, onChange: function (e) { return _this.onItemNameChange(e); } }),
+                                React.createElement("button", { onClick: function (e) { return _this.onClickAddItem(_this.state.itemName); }, disabled: !this.state.itemName || this.state.itemName == "" }, "Add")),
+                            React.createElement("div", null,
+                                React.createElement("table", null,
+                                    React.createElement("thead", null,
+                                        React.createElement("tr", null,
+                                            React.createElement("th", null, "Task"),
+                                            React.createElement("th", null, "Status"),
+                                            React.createElement("th", null, "Action"))),
+                                    React.createElement("tbody", null, this.state.state.Items.map(function (item, index) { return (React.createElement("tr", { key: "table-item-" + index },
+                                        React.createElement("td", null, item.Name),
+                                        React.createElement("td", null, item.Result ? item.Result : "To do"),
+                                        React.createElement("td", null, !item.Result &&
+                                            React.createElement("button", { onClick: function (e) { return _this.runVote(index); } }, "Run vote")))); })))))),
+                    React.createElement("div", null,
                         React.createElement("div", null,
                             React.createElement("label", null, "Changer de nom :"),
                             React.createElement("input", { type: "text", onChange: this.changeName() })),
-                        React.createElement("ul", { style: playersListStyle }, this.state.Players.map(function (p) { return (React.createElement("li", { key: p.Id },
-                            React.createElement(Player, { player: p, voted: _this.hasVoted(p.Id) }))); }))))));
+                        React.createElement("ul", { style: playersListStyle }, players)))));
         };
         return Main;
     }(React.Component));
@@ -226,18 +281,35 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client",
     socket.on("disconnect", function () {
         console.log("connexion perdue!");
     });
-
+    function runVote(index) {
+        console.log("run_vote", index);
+        socket.emit("run_vote", index);
+    }
     function vote(value) {
         var state = store.getState();
-        var previousVote = state.CurrentRun.Votes[state.id]
-        if (previousVote != value) {
-            socket.emit("vote", value);
+        var vote = state.CurrentRun.Votes[state.id];
+        if (vote && value == vote) {
+            console.log("vote", "");
+            socket.emit("vote", "");
         }
         else {
-            socket.emit("vote", "")
+            console.log("vote", value);
+            socket.emit("vote", value);
         }
+    }
+    function closeVote() {
+        console.log("close_vote");
+        socket.emit("close_vote");
+    }
+    function resetVote() {
+        console.log("reset_vote");
+        socket.emit("reset_vote");
     }
     function setName(value) {
         socket.emit("change_name", value);
+    }
+    function addItem(item) {
+        console.log("add_item", item);
+        socket.emit("add_item", item);
     }
 });

@@ -5,13 +5,19 @@ export interface Player {
 }
 
 export class Run {
-    public Name : string = "def";
+    public Item : Item;
     public Votes : Array<string> = new Array<string>();
+}
+
+export class Item {
+    public Name : string;
+    public Result : string;
 }
 
 export class State {
     public id: number;
     public Players: Array<Player> = new Array<Player>();
+    public Items: Array<Item> = new Array<Item>();
     public CurrentRun : Run = new Run();
 }
 
@@ -36,6 +42,7 @@ export class Store {
     setState(state: State) {
         this.state.Players = state.Players;
         this.state.CurrentRun = state.CurrentRun;
+        this.state.Items = state.Items;
         this.raise();
     }
 
