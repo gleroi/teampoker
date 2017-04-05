@@ -38,7 +38,7 @@ class Card extends React.Component<any, any> {
 
 interface PlayerProps {
     player: st.Player
-    voted: boolean
+    voted: boolean|string
 }
 
 class Player extends React.Component<PlayerProps, any> {
@@ -59,12 +59,19 @@ class Player extends React.Component<PlayerProps, any> {
         };
 
         var { player, voted, ...others } = this.props;
+        var vote = null;
+        if (voted === true) {
+           vote = <span className="fa fa-thumbs-up" style={voteStyle} />
+        }
+        if (typeof(voted) == "string") {
+           vote = <span style={voteStyle}>{voted}</span>
+        }
 
         return (
             <div {...others} >
                 <span className="fa fa-odnoklassniki-square" style={iconStyle} />
                 <span style={nameStyle}>{player.Name}</span>
-                {voted && (<span className="fa fa-thumbs-up" style={voteStyle} />)}
+                {vote}
             </div>
         )
     }
@@ -121,9 +128,15 @@ class Main extends React.Component<any, { state: st.State, itemName: string }> {
         return false;
     }
 
-    hasVoted(id: number): boolean {
-        var myVote = this.state.state.CurrentRun.Votes[id];
-        return myVote != undefined && myVote != null && myVote != "";
+    Vote(id: number): boolean|string {
+        if (this.state.state.CurrentRun.Item) {
+            if (this.state.state.CurrentRun.Item.Historic) {
+                return this.state.state.CurrentRun.Item.Historic[id];
+            }
+            var myVote = this.state.state.CurrentRun.Votes[id];
+            return myVote != undefined && myVote != null && myVote != "";
+        }
+        return false;
     }
 
     runVote(index: number) {
@@ -176,7 +189,9 @@ class Main extends React.Component<any, { state: st.State, itemName: string }> {
         var players = [];
         for (let id in this.state.state.Players) {
             let p = this.state.state.Players[id]
-            players.push(<li key={"player" + p.Id} style={playerStyle}><Player player={p} voted={this.hasVoted(p.Id)} /></li>);
+            players.push(<li key={"player" + p.Id} style={playerStyle}>
+                <Player player={p} voted={this.Vote(p.Id)} />
+            </li>);
         }
         var item = this.state.state.CurrentRun.Item;
 

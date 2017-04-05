@@ -92,6 +92,9 @@ func (poker *Session) Record(player *Player, vote string) {
 
 func (poker *Session) ResetVote() {
 	poker.CurrentRun.Votes = make(map[int]string)
+	for _, p := range poker.Players {
+		poker.CurrentRun.Votes[p.Id] = ""
+	}
 	poker.CurrentRun.Item.Result = ""
 	poker.CurrentRun.Item.Historic = nil
 }

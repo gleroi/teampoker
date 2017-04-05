@@ -129,10 +129,17 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client",
                 float: "right"
             };
             var _a = this.props, player = _a.player, voted = _a.voted, others = __rest(_a, ["player", "voted"]);
+            var vote = null;
+            if (voted === true) {
+                vote = React.createElement("span", { className: "fa fa-thumbs-up", style: voteStyle });
+            }
+            if (typeof (voted) == "string") {
+                vote = React.createElement("span", { style: voteStyle }, voted);
+            }
             return (React.createElement("div", __assign({}, others),
                 React.createElement("span", { className: "fa fa-odnoklassniki-square", style: iconStyle }),
                 React.createElement("span", { style: nameStyle }, player.Name),
-                voted && (React.createElement("span", { className: "fa fa-thumbs-up", style: voteStyle }))));
+                vote));
         };
         return Player;
     }(React.Component));
@@ -181,9 +188,15 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client",
             }
             return false;
         };
-        Main.prototype.hasVoted = function (id) {
-            var myVote = this.state.state.CurrentRun.Votes[id];
-            return myVote != undefined && myVote != null && myVote != "";
+        Main.prototype.Vote = function (id) {
+            if (this.state.state.CurrentRun.Item) {
+                if (this.state.state.CurrentRun.Item.Historic) {
+                    return this.state.state.CurrentRun.Item.Historic[id];
+                }
+                var myVote = this.state.state.CurrentRun.Votes[id];
+                return myVote != undefined && myVote != null && myVote != "";
+            }
+            return false;
         };
         Main.prototype.runVote = function (index) {
             runVote(index);
@@ -230,7 +243,7 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client",
             for (var id in this.state.state.Players) {
                 var p = this.state.state.Players[id];
                 players.push(React.createElement("li", { key: "player" + p.Id, style: playerStyle },
-                    React.createElement(Player, { player: p, voted: this.hasVoted(p.Id) })));
+                    React.createElement(Player, { player: p, voted: this.Vote(p.Id) })));
             }
             var item = this.state.state.CurrentRun.Item;
             return (React.createElement("div", null,

@@ -12,6 +12,7 @@ export class Run {
 export class Item {
     public Name : string;
     public Result : string;
+    public Historic: Array<string>;
 }
 
 export class State {
