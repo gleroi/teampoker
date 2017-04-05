@@ -38,7 +38,7 @@ class Card extends React.Component<any, any> {
 
 interface PlayerProps {
     player: st.Player
-    voted: boolean|string
+    voted: boolean | string
 }
 
 class Player extends React.Component<PlayerProps, any> {
@@ -61,10 +61,10 @@ class Player extends React.Component<PlayerProps, any> {
         var { player, voted, ...others } = this.props;
         var vote = null;
         if (voted === true) {
-           vote = <span className="fa fa-thumbs-up" style={voteStyle} />
+            vote = <span className="fa fa-thumbs-up" style={voteStyle} />
         }
-        if (typeof(voted) == "string") {
-           vote = <span style={voteStyle}>{voted}</span>
+        if (typeof (voted) == "string") {
+            vote = <span style={voteStyle}>{voted}</span>
         }
 
         return (
@@ -94,14 +94,18 @@ class Main extends React.Component<any, { state: st.State, itemName: string }> {
 
     }
 
-    onItemNameChange(e: React.ChangeEvent<HTMLInputElement>) {
-        var val = e.target.value;
+    itemName(val: string) {
         this.setState((prev, props) => {
             return {
                 state: prev.state,
                 itemName: val
             }
         });
+    }
+
+    onItemNameChange(e: React.ChangeEvent<HTMLInputElement>) {
+        var val = e.target.value;
+        this.itemName(val);
     }
 
     onClickVote(val) {
@@ -112,6 +116,7 @@ class Main extends React.Component<any, { state: st.State, itemName: string }> {
 
     onClickAddItem(itemName: string) {
         addItem(itemName);
+        this.itemName("");
     }
 
     changeName() {
@@ -128,7 +133,7 @@ class Main extends React.Component<any, { state: st.State, itemName: string }> {
         return false;
     }
 
-    Vote(id: number): boolean|string {
+    Vote(id: number): boolean | string {
         if (this.state.state.CurrentRun.Item) {
             if (this.state.state.CurrentRun.Item.Historic) {
                 return this.state.state.CurrentRun.Item.Historic[id];
@@ -199,7 +204,7 @@ class Main extends React.Component<any, { state: st.State, itemName: string }> {
             <h1>Team Poker</h1>
 
             <h3>
-                { item ? ("Voting for " + item.Name) : "Nothing to vote"}
+                {item ? ("Voting for " + item.Name) : "Nothing to vote"}
             </h3>
 
             <div>

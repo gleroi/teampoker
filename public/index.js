@@ -166,14 +166,17 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client",
                 };
             });
         };
-        Main.prototype.onItemNameChange = function (e) {
-            var val = e.target.value;
+        Main.prototype.itemName = function (val) {
             this.setState(function (prev, props) {
                 return {
                     state: prev.state,
                     itemName: val
                 };
             });
+        };
+        Main.prototype.onItemNameChange = function (e) {
+            var val = e.target.value;
+            this.itemName(val);
         };
         Main.prototype.onClickVote = function (val) {
             return function (e) {
@@ -182,6 +185,7 @@ define("index", ["require", "exports", "react", "react-dom", "socket.io-client",
         };
         Main.prototype.onClickAddItem = function (itemName) {
             addItem(itemName);
+            this.itemName("");
         };
         Main.prototype.changeName = function () {
             return function (e) {
