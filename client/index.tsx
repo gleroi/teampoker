@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as Dom from "react-dom";
+import * as players from "./players"
 import * as io from "socket.io-client";
 import * as st from "./store"
 
@@ -36,51 +37,10 @@ class Card extends React.Component<any, any> {
     }
 }
 
-interface PlayerProps {
-    player: st.Player
-    voted: boolean | string
-}
-
-class Player extends React.Component<PlayerProps, any> {
-    render() {
-        var nameStyle: React.CSSProperties = {
-            marginLeft: 7
-        };
-
-        var iconStyle: React.CSSProperties = {
-            fontSize: "16pt",
-            color: "#8BC34A"
-        };
-
-        var voteStyle: React.CSSProperties = {
-            fontSize: "16pt",
-            color: "#cddc39",
-            float: "right"
-        };
-
-        var { player, voted, ...others } = this.props;
-        var vote = null;
-        if (voted === true) {
-            vote = <span className="fa fa-thumbs-up" style={voteStyle} />
-        }
-        if (typeof (voted) == "string") {
-            vote = <span style={voteStyle}>{voted}</span>
-        }
-
-        return (
-            <div {...others} >
-                <span className="fa fa-odnoklassniki-square" style={iconStyle} />
-                <span style={nameStyle}>{player.Name}</span>
-                {vote}
-            </div>
-        )
-    }
-}
-
-class Main extends React.Component<any, { state: st.State, itemName: string }> {
+class Main extends React.Component<any, { game: st.State, itemName: string }> {
     constructor(props, context) {
         super(props, context);
-        this.state = { state: store.getState(), itemName: "" }
+        this.state = { game: store.getState(), itemName: "" }
         store.subscribe(() => this.onChange());
     }
 
@@ -97,7 +57,7 @@ class Main extends React.Component<any, { state: st.State, itemName: string }> {
     itemName(val: string) {
         this.setState((prev, props) => {
             return {
-                state: prev.state,
+                state: prev.game,
                 itemName: val
             }
         });
@@ -126,20 +86,9 @@ class Main extends React.Component<any, { state: st.State, itemName: string }> {
     }
 
     isMyVote(vote: string): boolean {
-        var myVote = this.state.state.CurrentRun.Votes[this.state.state.id];
+        var myVote = this.state.game.CurrentRun.Votes[this.state.game.id];
         if (myVote) {
             return myVote == vote;
-        }
-        return false;
-    }
-
-    Vote(id: number): boolean | string {
-        if (this.state.state.CurrentRun.Item) {
-            if (this.state.state.CurrentRun.Item.Historic) {
-                return this.state.state.CurrentRun.Item.Historic[id];
-            }
-            var myVote = this.state.state.CurrentRun.Votes[id];
-            return myVote != undefined && myVote != null && myVote != "";
         }
         return false;
     }
@@ -169,17 +118,6 @@ class Main extends React.Component<any, { state: st.State, itemName: string }> {
             flexWrap: "wrap"
         }
 
-        var playerStyle: React.CSSProperties = {
-            width: 175
-        }
-
-        var playersListStyle: React.CSSProperties = {
-            listStyleType: "none",
-            width: 200,
-            padding: 0,
-            margin: "10px 0 0 0 "
-        }
-
         var votes = [
             { value: "1", text: "1" },
             { value: "2", text: "2" },
@@ -191,14 +129,7 @@ class Main extends React.Component<any, { state: st.State, itemName: string }> {
             { value: "coffee", text: <span className="fa fa-coffee" /> },
             { value: "?", text: "?" }];
 
-        var players = [];
-        for (let id in this.state.state.Players) {
-            let p = this.state.state.Players[id]
-            players.push(<li key={"player" + p.Id} style={playerStyle}>
-                <Player player={p} voted={this.Vote(p.Id)} />
-            </li>);
-        }
-        var item = this.state.state.CurrentRun.Item;
+        var item = this.state.game.CurrentRun.Item;
 
         return (<div>
             <h1>Team Poker</h1>
@@ -244,7 +175,7 @@ class Main extends React.Component<any, { state: st.State, itemName: string }> {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {this.state.state.Items.map((item, index) => (
+                                    {this.state.game.Items.map((item, index) => (
                                         <tr key={"table-item-" + index}>
                                             <td>{item.Name}</td>
                                             <td>{item.Result ? item.Result : "To do"}</td>
@@ -265,9 +196,7 @@ class Main extends React.Component<any, { state: st.State, itemName: string }> {
                         <label>Changer de nom :</label>
                         <input type="text" onChange={this.changeName()} />
                     </div>
-                    <ul style={playersListStyle}>
-                        {players}
-                    </ul>
+                    <players.List players={this.state.game.Players} run={this.state.game.CurrentRun} />
                 </div>
             </div>
         </div>);

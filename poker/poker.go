@@ -64,8 +64,8 @@ func (poker *Session) NewPlayer(id int) *Player {
 			Name: "default",
 		}
 		poker.Players[p.Id] = p
+		poker.CurrentRun.Votes[p.Id] = ""
 	}
-	poker.CurrentRun.Votes[p.Id] = ""
 	return p
 }
 
@@ -136,6 +136,7 @@ func (poker *Session) CloseVote() {
 	for vote, count := range result {
 		if count >= selectedCount {
 			selectedVote = vote
+			selectedCount = count
 		}
 	}
 	poker.CurrentRun.Item.Result = selectedVote
