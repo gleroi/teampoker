@@ -69,7 +69,7 @@ export class List extends React.Component<ListProps, void> {
     render() {
 
         var playerStyle: React.CSSProperties = {
-            margin: "3px 0"
+            margin: "5px 0"
         }
 
         var playersListStyle: React.CSSProperties = {

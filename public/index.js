@@ -1,13 +1,8 @@
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
 var __assign = (this && this.__assign) || Object.assign || function(t) {
     for (var s, i = 1, n = arguments.length; i < n; i++) {
         s = arguments[i];
@@ -25,9 +20,58 @@ var __rest = (this && this.__rest) || function (s, e) {
             t[p[i]] = s[p[i]];
     return t;
 };
+define("cards", ["require", "exports", "react"], function (require, exports, React) {
+    "use strict";
+    var Card = (function (_super) {
+        __extends(Card, _super);
+        function Card() {
+            return _super !== null && _super.apply(this, arguments) || this;
+        }
+        Card.prototype.render = function () {
+            var _a = this.props, children = _a.children, voted = _a.voted, others = __rest(_a, ["children", "voted"]);
+            return (React.createElement("div", __assign({ className: "card " + (voted ? "voted" : "") }, others),
+                React.createElement("div", { className: "card-text " + (voted ? "voted" : "") }, children)));
+        };
+        return Card;
+    }(React.Component));
+    exports.Card = Card;
+    var List = (function (_super) {
+        __extends(List, _super);
+        function List() {
+            return _super !== null && _super.apply(this, arguments) || this;
+        }
+        List.prototype.render = function () {
+            var _this = this;
+            var allCards = [
+                { value: "1", text: "1" },
+                { value: "2", text: "2" },
+                { value: "3", text: "3" },
+                { value: "5", text: "5" },
+                { value: "8", text: "8" },
+                { value: "13", text: "13" },
+                { value: "21", text: "21" },
+                { value: "coffee", text: React.createElement("span", { className: "fa fa-coffee" }) },
+                { value: "?", text: "?" }
+            ];
+            var cardsStyle = {
+                display: "flex",
+                flexDirection: "row",
+                flexWrap: "wrap"
+            };
+            return (React.createElement("div", { style: cardsStyle }, allCards.map(function (vote) { return (React.createElement(Card, { key: "card-" + vote.value, onClick: function (e) { return _this.props.vote(vote.value); }, voted: _this.props.myvote == vote.value }, vote.text)); })));
+        };
+        return List;
+    }(React.Component));
+    exports.List = List;
+});
 define("store", ["require", "exports"], function (require, exports) {
     "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
+    var RunStatus;
+    (function (RunStatus) {
+        RunStatus[RunStatus["None"] = 0] = "None";
+        RunStatus[RunStatus["Open"] = 1] = "Open";
+        RunStatus[RunStatus["Closed"] = 2] = "Closed";
+    })(RunStatus = exports.RunStatus || (exports.RunStatus = {}));
     var Run = (function () {
         function Run() {
             this.Votes = new Array();
@@ -47,6 +91,15 @@ define("store", ["require", "exports"], function (require, exports) {
             this.Items = new Array();
             this.CurrentRun = new Run();
         }
+        State.prototype.runStatus = function () {
+            if (this.CurrentRun.Item == null) {
+                return RunStatus.None;
+            }
+            if (this.CurrentRun.Item.Historic != null) {
+                return RunStatus.Closed;
+            }
+            return RunStatus.Open;
+        };
         return State;
     }());
     exports.State = State;
@@ -83,7 +136,6 @@ define("store", ["require", "exports"], function (require, exports) {
 });
 define("players", ["require", "exports", "react"], function (require, exports, React) {
     "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
     var Player = (function (_super) {
         __extends(Player, _super);
         function Player() {
@@ -140,7 +192,7 @@ define("players", ["require", "exports", "react"], function (require, exports, R
         };
         List.prototype.render = function () {
             var playerStyle = {
-                margin: "3px 0"
+                margin: "5px 0"
             };
             var playersListStyle = {
                 listStyleType: "none",
@@ -160,42 +212,44 @@ define("players", ["require", "exports", "react"], function (require, exports, R
     }(React.Component));
     exports.List = List;
 });
-define("index", ["require", "exports", "react", "react-dom", "players", "socket.io-client", "store"], function (require, exports, React, Dom, players, io, st) {
+define("votes", ["require", "exports", "react", "store"], function (require, exports, React, st) {
     "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    var Card = (function (_super) {
-        __extends(Card, _super);
-        function Card() {
+    var VoteRun = (function (_super) {
+        __extends(VoteRun, _super);
+        function VoteRun() {
             return _super !== null && _super.apply(this, arguments) || this;
         }
-        Card.prototype.render = function () {
-            var cardStyle = {
-                width: 100,
-                height: 150,
-                textAlign: "center",
-                verticalAlign: "middle",
-                border: "1px solid #AAAAAA",
-                borderRadius: 5,
-                margin: 5
-            };
-            var cardTextStyle = {
-                verticalAlign: "middle",
-                marginTop: 60,
-                fontSize: "24pt",
-                fontWeight: "bold",
-                fontFamily: "sans-serif",
-                color: "#333333"
-            };
-            var _a = this.props, children = _a.children, voted = _a.voted, others = __rest(_a, ["children", "voted"]);
-            if (voted) {
-                cardStyle.backgroundColor = "#CDDC39";
-                cardTextStyle.color = "white";
+        VoteRun.prototype.render = function () {
+            var _this = this;
+            if (this.props.status == st.RunStatus.None) {
+                return (React.createElement("h3", null, "Waiting for a vote to open..."));
             }
-            return (React.createElement("div", __assign({ style: cardStyle }, others),
-                React.createElement("div", { style: cardTextStyle }, children)));
+            if (this.props.status == st.RunStatus.Closed) {
+                return (React.createElement("div", null,
+                    React.createElement("h3", null,
+                        "Vote for ",
+                        this.props.run.Item.Name,
+                        " is closed"),
+                    React.createElement("div", null,
+                        React.createElement("button", { onClick: function (e) { return _this.props.resetVote(); } }, "Reset vote"))));
+            }
+            if (this.props.status == st.RunStatus.Open) {
+                return (React.createElement("div", null,
+                    React.createElement("h3", null,
+                        "Vote for ",
+                        this.props.run.Item.Name,
+                        " is open"),
+                    React.createElement("div", null,
+                        React.createElement("button", { onClick: function (e) { return _this.props.closeVote(); } }, "Close vote"),
+                        React.createElement("button", { onClick: function (e) { return _this.props.resetVote(); } }, "Reset vote"))));
+            }
         };
-        return Card;
+        return VoteRun;
     }(React.Component));
+    exports.VoteRun = VoteRun;
+});
+define("index", ["require", "exports", "react", "react-dom", "players", "votes", "cards", "socket.io-client", "store"], function (require, exports, React, Dom, players, votes, cards, io, st) {
+    "use strict";
     var Main = (function (_super) {
         __extends(Main, _super);
         function Main(props, context) {
@@ -224,10 +278,8 @@ define("index", ["require", "exports", "react", "react-dom", "players", "socket.
             var val = e.target.value;
             this.itemName(val);
         };
-        Main.prototype.onClickVote = function (val) {
-            return function (e) {
-                vote(val);
-            };
+        Main.prototype.onVote = function (val) {
+            vote(val);
         };
         Main.prototype.onClickAddItem = function (itemName) {
             addItem(itemName);
@@ -238,12 +290,8 @@ define("index", ["require", "exports", "react", "react-dom", "players", "socket.
                 setName(e.currentTarget.value);
             };
         };
-        Main.prototype.isMyVote = function (vote) {
-            var myVote = this.state.game.CurrentRun.Votes[this.state.game.id];
-            if (myVote) {
-                return myVote == vote;
-            }
-            return false;
+        Main.prototype.myVote = function () {
+            return this.state.game.CurrentRun.Votes[this.state.game.id];
         };
         Main.prototype.runVote = function (index) {
             runVote(index);
@@ -261,55 +309,38 @@ define("index", ["require", "exports", "react", "react-dom", "players", "socket.
                 flexDirection: "row",
                 flexWrap: "nowrap"
             };
-            var cardsStyle = {
-                display: "flex",
-                flexDirection: "row",
-                flexWrap: "wrap"
-            };
-            var votes = [
-                { value: "1", text: "1" },
-                { value: "2", text: "2" },
-                { value: "3", text: "3" },
-                { value: "5", text: "5" },
-                { value: "8", text: "8" },
-                { value: "13", text: "13" },
-                { value: "21", text: "21" },
-                { value: "coffee", text: React.createElement("span", { className: "fa fa-coffee" }) },
-                { value: "?", text: "?" }
-            ];
-            var item = this.state.game.CurrentRun.Item;
+            var voteOpened = this.state.game.runStatus() == st.RunStatus.Open;
             return (React.createElement("div", null,
                 React.createElement("h1", null, "Team Poker"),
-                React.createElement("h3", null, item ? ("Voting for " + item.Name) : "Nothing to vote"),
-                React.createElement("div", null,
-                    React.createElement("button", { onClick: function (e) { return _this.closeVote(); } }, "Close vote"),
-                    React.createElement("button", { onClick: function (e) { return _this.resetVote(); } }, "Reset vote")),
-                React.createElement("div", { style: columnsStyle },
+                React.createElement("section", null,
+                    React.createElement(votes.VoteRun, { run: this.state.game.CurrentRun, status: this.state.game.runStatus(), closeVote: this.closeVote, resetVote: this.resetVote })),
+                React.createElement("section", { style: columnsStyle },
                     React.createElement("div", null,
-                        React.createElement("div", { style: cardsStyle }, votes.map(function (vote) { return (React.createElement(Card, { key: "card-" + vote.value, onClick: _this.onClickVote(vote.value), voted: _this.isMyVote(vote.value) }, vote.text)); })),
-                        React.createElement("div", null,
-                            React.createElement("h2", null, "Tasks"),
-                            React.createElement("div", null,
-                                React.createElement("label", null, "Task \u00A0"),
-                                React.createElement("input", { type: "text", size: 60, value: this.state.itemName, onChange: function (e) { return _this.onItemNameChange(e); } }),
-                                React.createElement("button", { onClick: function (e) { return _this.onClickAddItem(_this.state.itemName); }, disabled: !this.state.itemName || this.state.itemName == "" }, "Add")),
-                            React.createElement("div", null,
-                                React.createElement("table", null,
-                                    React.createElement("thead", null,
-                                        React.createElement("tr", null,
-                                            React.createElement("th", null, "Task"),
-                                            React.createElement("th", null, "Status"),
-                                            React.createElement("th", null, "Action"))),
-                                    React.createElement("tbody", null, this.state.game.Items.map(function (item, index) { return (React.createElement("tr", { key: "table-item-" + index },
-                                        React.createElement("td", null, item.Name),
-                                        React.createElement("td", null, item.Result ? item.Result : "To do"),
-                                        React.createElement("td", null, !item.Result &&
-                                            React.createElement("button", { onClick: function (e) { return _this.runVote(index); } }, "Run vote")))); })))))),
+                        React.createElement("section", null,
+                            React.createElement(cards.List, { vote: this.onVote, myvote: this.myVote() }))),
                     React.createElement("div", null,
                         React.createElement("div", null,
                             React.createElement("label", null, "Changer de nom :"),
                             React.createElement("input", { type: "text", onChange: this.changeName() })),
-                        React.createElement(players.List, { players: this.state.game.Players, run: this.state.game.CurrentRun })))));
+                        React.createElement(players.List, { players: this.state.game.Players, run: this.state.game.CurrentRun }))),
+                React.createElement("section", null,
+                    React.createElement("h2", null, "Tasks"),
+                    React.createElement("div", null,
+                        React.createElement("label", null, "Task \u00A0"),
+                        React.createElement("input", { type: "text", size: 60, value: this.state.itemName, onChange: function (e) { return _this.onItemNameChange(e); } }),
+                        React.createElement("button", { onClick: function (e) { return _this.onClickAddItem(_this.state.itemName); }, disabled: !this.state.itemName || this.state.itemName == "" }, "Add")),
+                    React.createElement("div", null,
+                        React.createElement("table", null,
+                            React.createElement("thead", null,
+                                React.createElement("tr", null,
+                                    React.createElement("th", null, "Task"),
+                                    React.createElement("th", null, "Status"),
+                                    React.createElement("th", null, "Action"))),
+                            React.createElement("tbody", null, this.state.game.Items.map(function (item, index) { return (React.createElement("tr", { key: "table-item-" + index },
+                                React.createElement("td", null, item.Name),
+                                React.createElement("td", null, item.Result ? item.Result : "To do"),
+                                React.createElement("td", null, !item.Result &&
+                                    React.createElement("button", { onClick: function (e) { return _this.runVote(index); } }, "Run vote")))); })))))));
         };
         return Main;
     }(React.Component));
@@ -358,3 +389,4 @@ define("index", ["require", "exports", "react", "react-dom", "players", "socket.
         socket.emit("add_item", item);
     }
 });
+//# sourceMappingURL=index.js.map

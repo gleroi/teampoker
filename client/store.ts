@@ -4,6 +4,12 @@ export interface Player {
     Name: string;
 }
 
+export enum RunStatus {
+    None,
+    Open,
+    Closed,
+}
+
 export class Run {
     public Item : Item;
     public Votes : Array<string> = new Array<string>();
@@ -20,6 +26,17 @@ export class State {
     public Players: Array<Player> = new Array<Player>();
     public Items: Array<Item> = new Array<Item>();
     public CurrentRun : Run = new Run();
+
+    
+    runStatus() : RunStatus {
+        if (this.CurrentRun.Item == null) {
+            return RunStatus.None;
+        }
+        if (this.CurrentRun.Item.Historic != null) {
+            return RunStatus.Closed;
+        }
+        return RunStatus.Open;
+    }
 }
 
 export class Store {

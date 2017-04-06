@@ -9,6 +9,6 @@
         "jsx": "react",
         "module": "amd",
         "outFile": "public/index.js",
-        "sourceMap": false
+        "sourceMap": true
     }
 }

@@ -1,41 +1,10 @@
 import * as React from "react";
 import * as Dom from "react-dom";
-import * as players from "./players"
+import * as players from "./players";
+import * as votes from "./votes";
+import * as cards from "./cards";
 import * as io from "socket.io-client";
 import * as st from "./store"
-
-class Card extends React.Component<any, any> {
-    render() {
-        var cardStyle: React.CSSProperties = {
-            width: 100,
-            height: 150,
-            textAlign: "center",
-            verticalAlign: "middle",
-            border: "1px solid #AAAAAA",
-            borderRadius: 5,
-            margin: 5
-        }
-
-        var cardTextStyle: React.CSSProperties = {
-            verticalAlign: "middle",
-            marginTop: 60,
-            fontSize: "24pt",
-            fontWeight: "bold",
-            fontFamily: "sans-serif",
-            color: "#333333"
-        }
-
-        var { children, voted, ...others } = this.props;
-
-        if (voted) {
-            cardStyle.backgroundColor = "#CDDC39";
-            cardTextStyle.color = "white";
-        }
-        return (
-            <div style={cardStyle} {...others}><div style={cardTextStyle}>{children}</div></div>
-        )
-    }
-}
 
 class Main extends React.Component<any, { game: st.State, itemName: string }> {
     constructor(props, context) {
@@ -68,10 +37,8 @@ class Main extends React.Component<any, { game: st.State, itemName: string }> {
         this.itemName(val);
     }
 
-    onClickVote(val) {
-        return (e) => {
-            vote(val);
-        }
+    onVote(val) {
+        vote(val);
     }
 
     onClickAddItem(itemName: string) {
@@ -85,12 +52,8 @@ class Main extends React.Component<any, { game: st.State, itemName: string }> {
         }
     }
 
-    isMyVote(vote: string): boolean {
-        var myVote = this.state.game.CurrentRun.Votes[this.state.game.id];
-        if (myVote) {
-            return myVote == vote;
-        }
-        return false;
+    myVote(): string {
+        return this.state.game.CurrentRun.Votes[this.state.game.id];
     }
 
     runVote(index: number) {
@@ -112,85 +75,23 @@ class Main extends React.Component<any, { game: st.State, itemName: string }> {
             flexWrap: "nowrap"
         }
 
-        var cardsStyle: React.CSSProperties = {
-            display: "flex",
-            flexDirection: "row",
-            flexWrap: "wrap"
-        }
-
-        var votes = [
-            { value: "1", text: "1" },
-            { value: "2", text: "2" },
-            { value: "3", text: "3" },
-            { value: "5", text: "5" },
-            { value: "8", text: "8" },
-            { value: "13", text: "13" },
-            { value: "21", text: "21" },
-            { value: "coffee", text: <span className="fa fa-coffee" /> },
-            { value: "?", text: "?" }];
-
-        var item = this.state.game.CurrentRun.Item;
+        var voteOpened = this.state.game.runStatus() == st.RunStatus.Open;
 
         return (<div>
             <h1>Team Poker</h1>
 
-            <h3>
-                {item ? ("Voting for " + item.Name) : "Nothing to vote"}
-            </h3>
+            <section>
+                <votes.VoteRun run={this.state.game.CurrentRun} status={this.state.game.runStatus()}
+                    closeVote={this.closeVote} resetVote={this.resetVote} />
+            </section>
 
-            <div>
-                <button onClick={(e) => this.closeVote()}>Close vote</button>
-                <button onClick={(e) => this.resetVote()}>Reset vote</button>
-            </div>
-
-            <div style={columnsStyle}>
+            <section style={columnsStyle}>
                 <div>
-                    <div style={cardsStyle}>
-                        {
-                            votes.map(vote => (
-                                <Card key={"card-" + vote.value} onClick={this.onClickVote(vote.value)} voted={this.isMyVote(vote.value)}>{vote.text}</Card>
-                            ))
-                        }
-                    </div>
-
-                    <div>
-                        <h2>Tasks</h2>
-
-                        <div>
-                            <label>Task &nbsp;</label>
-                            <input type="text" size={60}
-                                value={this.state.itemName} onChange={(e) => this.onItemNameChange(e)} />
-                            <button onClick={(e) => this.onClickAddItem(this.state.itemName)}
-                                disabled={!this.state.itemName || this.state.itemName == ""} >Add
-                            </button>
-                        </div>
-
-                        <div>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Task</th>
-                                        <th>Status</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {this.state.game.Items.map((item, index) => (
-                                        <tr key={"table-item-" + index}>
-                                            <td>{item.Name}</td>
-                                            <td>{item.Result ? item.Result : "To do"}</td>
-                                            <td>
-                                                {!item.Result &&
-                                                    <button onClick={(e) => this.runVote(index)}>Run vote</button>}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-
-                        </div>
-                    </div>
+                    <section>
+                        <cards.List vote={this.onVote} myvote={this.myVote()} />
+                    </section>
                 </div>
+
                 <div>
                     <div>
                         <label>Changer de nom :</label>
@@ -198,7 +99,45 @@ class Main extends React.Component<any, { game: st.State, itemName: string }> {
                     </div>
                     <players.List players={this.state.game.Players} run={this.state.game.CurrentRun} />
                 </div>
-            </div>
+            </section>
+
+            <section>
+                <h2>Tasks</h2>
+
+                <div>
+                    <label>Task &nbsp;</label>
+                    <input type="text" size={60}
+                        value={this.state.itemName} onChange={(e) => this.onItemNameChange(e)} />
+                    <button onClick={(e) => this.onClickAddItem(this.state.itemName)}
+                        disabled={!this.state.itemName || this.state.itemName == ""} >Add
+                            </button>
+                </div>
+
+                <div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {this.state.game.Items.map((item, index) => (
+                                <tr key={"table-item-" + index}>
+                                    <td>{item.Name}</td>
+                                    <td>{item.Result ? item.Result : "To do"}</td>
+                                    <td>
+                                        {!item.Result &&
+                                            <button onClick={(e) => this.runVote(index)}>Run vote</button>}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+
+                </div>
+            </section>
         </div>);
     }
 }
