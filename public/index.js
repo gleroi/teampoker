@@ -257,7 +257,34 @@ define("votes", ["require", "exports", "react", "store"], function (require, exp
     }(React.Component));
     exports.VoteRun = VoteRun;
 });
-define("index", ["require", "exports", "react", "react-dom", "players", "votes", "cards", "socket.io-client", "store"], function (require, exports, React, Dom, players, votes, cards, io, st) {
+define("tasks", ["require", "exports", "react"], function (require, exports, React) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var List = (function (_super) {
+        __extends(List, _super);
+        function List() {
+            return _super !== null && _super.apply(this, arguments) || this;
+        }
+        List.prototype.render = function () {
+            var _this = this;
+            return (React.createElement("div", null,
+                React.createElement("table", null,
+                    React.createElement("thead", null,
+                        React.createElement("tr", null,
+                            React.createElement("th", null, "Task"),
+                            React.createElement("th", null, "Status"),
+                            React.createElement("th", null, "Action"))),
+                    React.createElement("tbody", null, this.props.items.map(function (item, index) { return (React.createElement("tr", { key: "table-item-" + index },
+                        React.createElement("td", null, item.Name),
+                        React.createElement("td", null, item.Result ? item.Result : "To do"),
+                        React.createElement("td", null, !item.Result &&
+                            React.createElement("button", { onClick: function (e) { return _this.props.runVote(index); } }, "Run vote")))); })))));
+        };
+        return List;
+    }(React.Component));
+    exports.List = List;
+});
+define("index", ["require", "exports", "react", "react-dom", "players", "votes", "cards", "tasks", "socket.io-client", "store"], function (require, exports, React, Dom, players, votes, cards, tasks, io, st) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Main = (function (_super) {
@@ -341,18 +368,7 @@ define("index", ["require", "exports", "react", "react-dom", "players", "votes",
                         React.createElement("label", null, "Task \u00A0"),
                         React.createElement("input", { type: "text", size: 60, value: this.state.itemName, onChange: function (e) { return _this.onItemNameChange(e); } }),
                         React.createElement("button", { onClick: function (e) { return _this.onClickAddItem(_this.state.itemName); }, disabled: !this.state.itemName || this.state.itemName == "" }, "Add")),
-                    React.createElement("div", null,
-                        React.createElement("table", null,
-                            React.createElement("thead", null,
-                                React.createElement("tr", null,
-                                    React.createElement("th", null, "Task"),
-                                    React.createElement("th", null, "Status"),
-                                    React.createElement("th", null, "Action"))),
-                            React.createElement("tbody", null, this.state.game.Items.map(function (item, index) { return (React.createElement("tr", { key: "table-item-" + index },
-                                React.createElement("td", null, item.Name),
-                                React.createElement("td", null, item.Result ? item.Result : "To do"),
-                                React.createElement("td", null, !item.Result &&
-                                    React.createElement("button", { onClick: function (e) { return _this.runVote(index); } }, "Run vote")))); })))))));
+                    React.createElement(tasks.List, { items: this.state.game.Items, runVote: function (index) { return _this.runVote(index); } }))));
         };
         return Main;
     }(React.Component));

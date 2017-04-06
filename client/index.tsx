@@ -3,6 +3,7 @@ import * as Dom from "react-dom";
 import * as players from "./players";
 import * as votes from "./votes";
 import * as cards from "./cards";
+import * as tasks from "./tasks";
 import * as io from "socket.io-client";
 import * as st from "./store"
 
@@ -116,30 +117,8 @@ class Main extends React.Component<any, { game: st.State, itemName: string }> {
                             </button>
                 </div>
 
-                <div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Task</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {this.state.game.Items.map((item, index) => (
-                                <tr key={"table-item-" + index}>
-                                    <td>{item.Name}</td>
-                                    <td>{item.Result ? item.Result : "To do"}</td>
-                                    <td>
-                                        {!item.Result &&
-                                            <button onClick={(e) => this.runVote(index)}>Run vote</button>}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                <tasks.List items={this.state.game.Items} runVote={(index) => this.runVote(index)} />
 
-                </div>
             </section>
         </div>);
     }
