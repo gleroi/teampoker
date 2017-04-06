@@ -16,8 +16,11 @@ export class VoteRun extends React.Component<VoteRunProps, void> {
         if (this.props.status == st.RunStatus.Closed) {
             return (
             <div>
-                <h3>Vote for {this.props.run.Item.Name} is closed</h3>
-
+                <h3>Vote is closed</h3>
+                <h5>{this.props.run.Item.Name}</h5>
+                <p>
+                    The result is <strong>{this.props.run.Item.Result}</strong>
+                </p>
                 <div>
                     <button onClick={(e) => this.props.resetVote()}>Reset vote</button>
                 </div>
@@ -26,7 +29,8 @@ export class VoteRun extends React.Component<VoteRunProps, void> {
         if (this.props.status == st.RunStatus.Open) {
             return (
             <div>
-                <h3>Vote for {this.props.run.Item.Name} is open</h3>
+                <h3>Vote is open</h3>
+                <h5>{this.props.run.Item.Name}</h5>
 
                 <div>
                     <button onClick={(e) => this.props.closeVote()}>Close vote</button>

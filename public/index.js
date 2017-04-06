@@ -235,19 +235,18 @@ define("votes", ["require", "exports", "react", "store"], function (require, exp
             }
             if (this.props.status == st.RunStatus.Closed) {
                 return (React.createElement("div", null,
-                    React.createElement("h3", null,
-                        "Vote for ",
-                        this.props.run.Item.Name,
-                        " is closed"),
+                    React.createElement("h3", null, "Vote is closed"),
+                    React.createElement("h5", null, this.props.run.Item.Name),
+                    React.createElement("p", null,
+                        "The result is ",
+                        React.createElement("strong", null, this.props.run.Item.Result)),
                     React.createElement("div", null,
                         React.createElement("button", { onClick: function (e) { return _this.props.resetVote(); } }, "Reset vote"))));
             }
             if (this.props.status == st.RunStatus.Open) {
                 return (React.createElement("div", null,
-                    React.createElement("h3", null,
-                        "Vote for ",
-                        this.props.run.Item.Name,
-                        " is open"),
+                    React.createElement("h3", null, "Vote is open"),
+                    React.createElement("h5", null, this.props.run.Item.Name),
                     React.createElement("div", null,
                         React.createElement("button", { onClick: function (e) { return _this.props.closeVote(); } }, "Close vote"),
                         React.createElement("button", { onClick: function (e) { return _this.props.resetVote(); } }, "Reset vote"))));
@@ -268,14 +267,14 @@ define("tasks", ["require", "exports", "react"], function (require, exports, Rea
         List.prototype.render = function () {
             var _this = this;
             return (React.createElement("div", null,
-                React.createElement("table", null,
+                React.createElement("table", { className: "tasks" },
                     React.createElement("thead", null,
                         React.createElement("tr", null,
                             React.createElement("th", null, "Task"),
                             React.createElement("th", null, "Status"),
                             React.createElement("th", null, "Action"))),
                     React.createElement("tbody", null, this.props.items.map(function (item, index) { return (React.createElement("tr", { key: "table-item-" + index },
-                        React.createElement("td", null, item.Name),
+                        React.createElement("td", { className: "task-name" }, item.Name),
                         React.createElement("td", null, item.Result ? item.Result : "To do"),
                         React.createElement("td", null, !item.Result &&
                             React.createElement("button", { onClick: function (e) { return _this.props.runVote(index); } }, "Run vote")))); })))));
@@ -328,6 +327,9 @@ define("index", ["require", "exports", "react", "react-dom", "players", "votes",
             };
         };
         Main.prototype.myVote = function () {
+            if (this.state.game.runStatus() == st.RunStatus.Closed) {
+                return this.state.game.CurrentRun.Item.Result;
+            }
             return this.state.game.CurrentRun.Votes[this.state.game.id];
         };
         Main.prototype.runVote = function (index) {
@@ -366,7 +368,7 @@ define("index", ["require", "exports", "react", "react-dom", "players", "votes",
                     React.createElement("h2", null, "Tasks"),
                     React.createElement("div", null,
                         React.createElement("label", null, "Task \u00A0"),
-                        React.createElement("input", { type: "text", size: 60, value: this.state.itemName, onChange: function (e) { return _this.onItemNameChange(e); } }),
+                        React.createElement("input", { type: "text", className: "task", value: this.state.itemName, onChange: function (e) { return _this.onItemNameChange(e); } }),
                         React.createElement("button", { onClick: function (e) { return _this.onClickAddItem(_this.state.itemName); }, disabled: !this.state.itemName || this.state.itemName == "" }, "Add")),
                     React.createElement(tasks.List, { items: this.state.game.Items, runVote: function (index) { return _this.runVote(index); } }))));
         };
@@ -374,6 +376,13 @@ define("index", ["require", "exports", "react", "react-dom", "players", "votes",
     }(React.Component));
     var socket = io();
     var store = new st.Store();
+    Notification.requestPermission();
+    function notify(content) {
+        var notification = new Notification("Team Poker", {
+            body: content,
+            icon: "favicon.png"
+        });
+    }
     Dom.render(React.createElement(Main, null), document.getElementById("main-container"));
     socket.on("join", function (id) {
         store.setId(id);
@@ -388,6 +397,7 @@ define("index", ["require", "exports", "react", "react-dom", "players", "votes",
     });
     socket.on("disconnect", function () {
         console.log("connexion perdue!");
+        notify("connection lost :'(");
     });
     function runVote(index) {
         console.log("run_vote", index);

@@ -10,7 +10,7 @@ export class List extends React.Component<ListProps, any> {
     render() {
         return (
             <div>
-                <table>
+                <table className="tasks">
                     <thead>
                         <tr>
                             <th>Task</th>
@@ -21,7 +21,7 @@ export class List extends React.Component<ListProps, any> {
                     <tbody>
                         {this.props.items.map((item, index) => (
                             <tr key={"table-item-" + index}>
-                                <td>{item.Name}</td>
+                                <td className="task-name">{item.Name}</td>
                                 <td>{item.Result ? item.Result : "To do"}</td>
                                 <td>
                                     {!item.Result &&

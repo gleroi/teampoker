@@ -54,6 +54,9 @@ class Main extends React.Component<any, { game: st.State, itemName: string }> {
     }
 
     myVote(): string {
+        if (this.state.game.runStatus() == st.RunStatus.Closed) {
+            return this.state.game.CurrentRun.Item.Result;
+        }
         return this.state.game.CurrentRun.Votes[this.state.game.id];
     }
 
@@ -110,7 +113,7 @@ class Main extends React.Component<any, { game: st.State, itemName: string }> {
 
                 <div>
                     <label>Task &nbsp;</label>
-                    <input type="text" size={60}
+                    <input type="text" className="task"
                         value={this.state.itemName} onChange={(e) => this.onItemNameChange(e)} />
                     <button onClick={(e) => this.onClickAddItem(this.state.itemName)}
                         disabled={!this.state.itemName || this.state.itemName == ""} >Add
@@ -127,6 +130,15 @@ class Main extends React.Component<any, { game: st.State, itemName: string }> {
 
 var socket = io();
 var store = new st.Store();
+Notification.requestPermission();
+
+function notify(content: string) {
+    var notification = new Notification("Team Poker",
+        {
+            body: content,
+            icon: "favicon.png"
+        });
+}
 
 Dom.render(<Main />, document.getElementById("main-container"));
 
@@ -144,7 +156,8 @@ socket.on("state", (state) => {
 });
 
 socket.on("disconnect", () => {
-    console.log("connexion perdue!")
+    console.log("connexion perdue!");
+    notify("connection lost :'(");
 });
 
 function runVote(index: number) {
