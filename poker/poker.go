@@ -64,7 +64,9 @@ func (poker *Session) NewPlayer(id int) *Player {
 			Name: "default",
 		}
 		poker.Players[p.Id] = p
-		poker.CurrentRun.Votes[p.Id] = ""
+		if poker.CurrentRun.Votes[p.Id] == "" {
+			poker.CurrentRun.Votes[p.Id] = ""
+		}
 	}
 	return p
 }

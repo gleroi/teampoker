@@ -1,0 +1,118 @@
+@color-highlight: #cddc39;
+@background-primary: #8bc34a;
+@foreground-primary: white;
+@border-color: #dadada;
+
+body {
+    font-family: sans-serif;
+    background-color: #fefefe;
+    margin: 0;
+}
+
+h1 {
+    font-size: 2.5em;
+    padding: 23px 13px;
+    background-color: @background-primary;
+    vertical-align: mid;
+    color: @foreground-primary;
+
+    img.logo {
+        height: 31px;
+        margin-right: 13px;
+    }
+
+}
+
+section {
+    margin: 0 7px;
+    padding: 11px 0;
+    border-bottom: 1px solid @border-color;
+
+    &:last-child {
+        border-bottom: 0;
+    }
+}
+
+button {
+    background-color: @background-primary;
+    border: 1px solid @background-primary;
+    padding: 5px 17px;
+    margin: 3px 7px;
+    border-radius: 3px;
+    color: white;
+    font-weight: bold;
+
+    &:hover {
+        border-color: @color-highlight;
+    }
+
+    :disabled {
+        background-color: @border-color;
+        border: 1px solid @border-color;
+        color: gray;
+    }
+}
+
+
+table {
+    border-spacing: 0;
+
+    thead th {
+        border-bottom: 2px solid @border-color;
+    }
+
+    th, td {
+        border: 0;
+        padding: 3px 13px;
+        border-right: 1px solid @border-color;
+    }
+
+    th:last-child, td:last-child{
+        border-right: 0;
+    }
+
+    tbody td {
+        border-bottom: 1px solid @border-color;
+    }
+
+    tbody tr:last-child td {
+        border-bottom: 0px;
+    }
+}
+
+
+/**
+* CARD
+*/
+
+.card {
+    width: 100px;
+    height: 150px;
+    text-align: center;
+    vertical-align: middle;
+    border: 1px solid @border-color;
+    border-radius: 5px;
+    margin: 5px;
+    background-color: #ffffff;
+
+    &:hover {
+       border: 1px solid @color-highlight;
+    }
+}
+
+.card.voted {
+     background-color: @color-highlight;
+}
+
+.card-text {
+    vertical-align: middle;
+    margin-top: 60px;
+    font-size: 24pt;
+    font-weight: bold;
+    font-family: sans-serif;
+    color: #333333;
+}
+
+.card-text.voted {
+    color: @foreground-primary;
+}

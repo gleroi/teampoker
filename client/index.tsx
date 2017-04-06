@@ -78,7 +78,10 @@ class Main extends React.Component<any, { game: st.State, itemName: string }> {
         var voteOpened = this.state.game.runStatus() == st.RunStatus.Open;
 
         return (<div>
-            <h1>Team Poker</h1>
+            <h1>
+                <img src="favicon.png" alt="logo" className="logo" />
+                Team Poker
+            </h1>
 
             <section>
                 <votes.VoteRun run={this.state.game.CurrentRun} status={this.state.game.runStatus()}
@@ -150,6 +153,10 @@ Dom.render(<Main />, document.getElementById("main-container"));
 
 socket.on("join", (id) => {
     store.setId(id);
+    var oldName = localStorage.getItem("poker_name");
+    if (oldName) {
+        setName(oldName);
+    }
 })
 
 socket.on("state", (state) => {
@@ -191,6 +198,7 @@ function resetVote() {
 
 function setName(value: string) {
     socket.emit("change_name", value)
+    localStorage.setItem("poker_name", value);
 }
 
 function addItem(item: string) {

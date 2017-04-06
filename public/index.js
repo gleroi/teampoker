@@ -1,8 +1,13 @@
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var __assign = (this && this.__assign) || Object.assign || function(t) {
     for (var s, i = 1, n = arguments.length; i < n; i++) {
         s = arguments[i];
@@ -22,6 +27,7 @@ var __rest = (this && this.__rest) || function (s, e) {
 };
 define("cards", ["require", "exports", "react"], function (require, exports, React) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var Card = (function (_super) {
         __extends(Card, _super);
         function Card() {
@@ -66,6 +72,7 @@ define("cards", ["require", "exports", "react"], function (require, exports, Rea
 });
 define("store", ["require", "exports"], function (require, exports) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var RunStatus;
     (function (RunStatus) {
         RunStatus[RunStatus["None"] = 0] = "None";
@@ -136,6 +143,7 @@ define("store", ["require", "exports"], function (require, exports) {
 });
 define("players", ["require", "exports", "react"], function (require, exports, React) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var Player = (function (_super) {
         __extends(Player, _super);
         function Player() {
@@ -214,6 +222,7 @@ define("players", ["require", "exports", "react"], function (require, exports, R
 });
 define("votes", ["require", "exports", "react", "store"], function (require, exports, React, st) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var VoteRun = (function (_super) {
         __extends(VoteRun, _super);
         function VoteRun() {
@@ -250,6 +259,7 @@ define("votes", ["require", "exports", "react", "store"], function (require, exp
 });
 define("index", ["require", "exports", "react", "react-dom", "players", "votes", "cards", "socket.io-client", "store"], function (require, exports, React, Dom, players, votes, cards, io, st) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var Main = (function (_super) {
         __extends(Main, _super);
         function Main(props, context) {
@@ -311,7 +321,9 @@ define("index", ["require", "exports", "react", "react-dom", "players", "votes",
             };
             var voteOpened = this.state.game.runStatus() == st.RunStatus.Open;
             return (React.createElement("div", null,
-                React.createElement("h1", null, "Team Poker"),
+                React.createElement("h1", null,
+                    React.createElement("img", { src: "favicon.png", alt: "logo", className: "logo" }),
+                    "Team Poker"),
                 React.createElement("section", null,
                     React.createElement(votes.VoteRun, { run: this.state.game.CurrentRun, status: this.state.game.runStatus(), closeVote: this.closeVote, resetVote: this.resetVote })),
                 React.createElement("section", { style: columnsStyle },
@@ -349,6 +361,10 @@ define("index", ["require", "exports", "react", "react-dom", "players", "votes",
     Dom.render(React.createElement(Main, null), document.getElementById("main-container"));
     socket.on("join", function (id) {
         store.setId(id);
+        var oldName = localStorage.getItem("poker_name");
+        if (oldName) {
+            setName(oldName);
+        }
     });
     socket.on("state", function (state) {
         console.log("state", state);
@@ -383,6 +399,7 @@ define("index", ["require", "exports", "react", "react-dom", "players", "votes",
     }
     function setName(value) {
         socket.emit("change_name", value);
+        localStorage.setItem("poker_name", value);
     }
     function addItem(item) {
         console.log("add_item", item);

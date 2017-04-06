@@ -27,6 +27,18 @@ func sendState(so socketio.Socket, poker *poker.Session) {
 	log.Printf("state sended")
 }
 
+func getCookieId(request *http.Request) (int, error) {
+	cookie, err := request.Cookie("poker")
+	if err != nil {
+		return -1, err
+	}
+	id, err := strconv.Atoi(cookie.Value)
+	if err != nil {
+		return -1, err
+	}
+	return id, nil
+}
+
 func main() {
 	poker := poker.NewSession()
 
@@ -38,14 +50,10 @@ func main() {
 	server.SetPingTimeout(10 * time.Second)
 
 	server.On("connection", func(so socketio.Socket) {
-		cookie, err := so.Request().Cookie("poker")
+		id, err := getCookieId(so.Request())
 		if err != nil {
 			log.Printf("error: %s", err)
 			return
-		}
-		id, err := strconv.Atoi(cookie.Value)
-		if err != nil {
-			log.Printf("error: %s", err)
 		}
 
 		player := poker.NewPlayer(id)
@@ -87,6 +95,11 @@ func main() {
 		so.On("change_name", func(name string) {
 			log.Printf("change_name %d %s\n", player.Id, name)
 			player.ChangeName(name)
+			so.Request().AddCookie(&http.Cookie{
+				Name:    "poker_name",
+				Expires: time.Now().Add(24 * time.Hour),
+				Value:   name,
+			})
 			sendState(so, poker)
 		})
 
@@ -119,6 +132,15 @@ func main() {
 				Name:    "poker",
 				Expires: time.Now().Add(24 * time.Hour),
 				Value:   fmt.Sprintf("%d", poker.NewId()),
+			})
+		}
+		_, err = r.Cookie("poker_name")
+		if err != nil {
+			log.Printf("error /: %s", err)
+			http.SetCookie(w, &http.Cookie{
+				Name:    "poker_name",
+				Expires: time.Now().Add(24 * time.Hour),
+				Value:   "default",
 			})
 		}
 		dir.ServeHTTP(w, r)
