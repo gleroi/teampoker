@@ -23,6 +23,7 @@ export class Item {
 
 export class State {
     public id: number;
+    public notification: string;
     public Players: Array<Player> = new Array<Player>();
     public Items: Array<Item> = new Array<Item>();
     public CurrentRun : Run = new Run();
@@ -67,5 +68,15 @@ export class Store {
     setId(id: number) {
         console.log("setId", id)
         this.state.id = id;
+    }
+
+    setNotification(content: string) {
+        this.state.notification = content;
+        this.raise();
+    }
+
+    unsetNotification() {
+        this.state.notification = null;
+        this.raise();
     }
 }

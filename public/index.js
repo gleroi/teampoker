@@ -1,13 +1,8 @@
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
 var __assign = (this && this.__assign) || Object.assign || function(t) {
     for (var s, i = 1, n = arguments.length; i < n; i++) {
         s = arguments[i];
@@ -27,7 +22,6 @@ var __rest = (this && this.__rest) || function (s, e) {
 };
 define("cards", ["require", "exports", "react"], function (require, exports, React) {
     "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
     var Card = (function (_super) {
         __extends(Card, _super);
         function Card() {
@@ -72,7 +66,6 @@ define("cards", ["require", "exports", "react"], function (require, exports, Rea
 });
 define("store", ["require", "exports"], function (require, exports) {
     "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
     var RunStatus;
     (function (RunStatus) {
         RunStatus[RunStatus["None"] = 0] = "None";
@@ -137,13 +130,33 @@ define("store", ["require", "exports"], function (require, exports) {
             console.log("setId", id);
             this.state.id = id;
         };
+        Store.prototype.setNotification = function (content) {
+            this.state.notification = content;
+            this.raise();
+        };
+        Store.prototype.unsetNotification = function () {
+            this.state.notification = null;
+            this.raise();
+        };
         return Store;
     }());
     exports.Store = Store;
 });
 define("players", ["require", "exports", "react"], function (require, exports, React) {
     "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
+    var colorPalette = [
+        "#F44336",
+        "#673AB7",
+        "#3F51B5",
+        "#E91E63",
+        "#9C27B0",
+        "#2196F3",
+        "#4CAF50",
+        "#FFEB3B",
+        "#00BCD4",
+        "#009688",
+        "#FF5722"
+    ];
     var Player = (function (_super) {
         __extends(Player, _super);
         function Player() {
@@ -155,7 +168,7 @@ define("players", ["require", "exports", "react"], function (require, exports, R
             };
             var iconStyle = {
                 fontSize: "16pt",
-                color: "#8BC34A"
+                color: colorPalette[this.props.player.Id % colorPalette.length]
             };
             var voteStyle = {
                 fontSize: "16pt",
@@ -222,7 +235,6 @@ define("players", ["require", "exports", "react"], function (require, exports, R
 });
 define("votes", ["require", "exports", "react", "store"], function (require, exports, React, st) {
     "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
     var VoteRun = (function (_super) {
         __extends(VoteRun, _super);
         function VoteRun() {
@@ -230,11 +242,12 @@ define("votes", ["require", "exports", "react", "store"], function (require, exp
         }
         VoteRun.prototype.render = function () {
             var _this = this;
+            var content = null;
             if (this.props.status == st.RunStatus.None) {
-                return (React.createElement("h3", null, "Waiting for a vote to open..."));
+                content = (React.createElement("h3", null, "Waiting for a vote to open..."));
             }
             if (this.props.status == st.RunStatus.Closed) {
-                return (React.createElement("div", null,
+                content = (React.createElement("div", null,
                     React.createElement("h3", null, "Vote is closed"),
                     React.createElement("h5", null, this.props.run.Item.Name),
                     React.createElement("p", null,
@@ -244,13 +257,14 @@ define("votes", ["require", "exports", "react", "store"], function (require, exp
                         React.createElement("button", { onClick: function (e) { return _this.props.resetVote(); } }, "Reset vote"))));
             }
             if (this.props.status == st.RunStatus.Open) {
-                return (React.createElement("div", null,
+                content = (React.createElement("div", null,
                     React.createElement("h3", null, "Vote is open"),
                     React.createElement("h5", null, this.props.run.Item.Name),
                     React.createElement("div", null,
                         React.createElement("button", { onClick: function (e) { return _this.props.closeVote(); } }, "Close vote"),
                         React.createElement("button", { onClick: function (e) { return _this.props.resetVote(); } }, "Reset vote"))));
             }
+            return (React.createElement("div", { className: "vote-run" }, content));
         };
         return VoteRun;
     }(React.Component));
@@ -258,7 +272,6 @@ define("votes", ["require", "exports", "react", "store"], function (require, exp
 });
 define("tasks", ["require", "exports", "react"], function (require, exports, React) {
     "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
     var List = (function (_super) {
         __extends(List, _super);
         function List() {
@@ -285,7 +298,6 @@ define("tasks", ["require", "exports", "react"], function (require, exports, Rea
 });
 define("index", ["require", "exports", "react", "react-dom", "players", "votes", "cards", "tasks", "socket.io-client", "store"], function (require, exports, React, Dom, players, votes, cards, tasks, io, st) {
     "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
     var Main = (function (_super) {
         __extends(Main, _super);
         function Main(props, context) {
@@ -353,6 +365,11 @@ define("index", ["require", "exports", "react", "react-dom", "players", "votes",
                 React.createElement("h1", null,
                     React.createElement("img", { src: "favicon.png", alt: "logo", className: "logo" }),
                     "Team Poker"),
+                this.state.game.notification && (React.createElement("div", { className: "notification" },
+                    React.createElement("div", null,
+                        React.createElement("img", { src: "favicon.png", alt: "logo" }),
+                        React.createElement("span", { className: "notification-title" }, "Team Poker")),
+                    React.createElement("div", { className: "notification-content" }, this.state.game.notification))),
                 React.createElement("section", null,
                     React.createElement(votes.VoteRun, { run: this.state.game.CurrentRun, status: this.state.game.runStatus(), closeVote: this.closeVote, resetVote: this.resetVote })),
                 React.createElement("section", { style: columnsStyle },
@@ -376,13 +393,6 @@ define("index", ["require", "exports", "react", "react-dom", "players", "votes",
     }(React.Component));
     var socket = io();
     var store = new st.Store();
-    Notification.requestPermission();
-    function notify(content) {
-        var notification = new Notification("Team Poker", {
-            body: content,
-            icon: "favicon.png"
-        });
-    }
     Dom.render(React.createElement(Main, null), document.getElementById("main-container"));
     socket.on("join", function (id) {
         store.setId(id);
@@ -395,8 +405,20 @@ define("index", ["require", "exports", "react", "react-dom", "players", "votes",
         console.log("state", state);
         store.setState(state);
     });
+    function notify(content) {
+        console.log("notify", content);
+        store.setNotification(content);
+        setTimeout(function () {
+            console.log("notify", "remove notification", content);
+            store.unsetNotification();
+        }, 5000);
+    }
+    socket.on("connect", function () {
+        console.log("connection ready!");
+        notify("connection ready \\o/");
+    });
     socket.on("disconnect", function () {
-        console.log("connexion perdue!");
+        console.log("connection lost!");
         notify("connection lost :'(");
     });
     function runVote(index) {

@@ -87,6 +87,16 @@ class Main extends React.Component<any, { game: st.State, itemName: string }> {
                 Team Poker
             </h1>
 
+            {this.state.game.notification && (
+                <div className="notification">
+                    <div>
+                        <img src="favicon.png" alt="logo" />
+                        <span className="notification-title">Team Poker</span>
+                    </div>
+                    <div className="notification-content">{this.state.game.notification}</div>
+                </div>
+            )}
+
             <section>
                 <votes.VoteRun run={this.state.game.CurrentRun} status={this.state.game.runStatus()}
                     closeVote={this.closeVote} resetVote={this.resetVote} />
@@ -130,15 +140,6 @@ class Main extends React.Component<any, { game: st.State, itemName: string }> {
 
 var socket = io();
 var store = new st.Store();
-Notification.requestPermission();
-
-function notify(content: string) {
-    var notification = new Notification("Team Poker",
-        {
-            body: content,
-            icon: "favicon.png"
-        });
-}
 
 Dom.render(<Main />, document.getElementById("main-container"));
 
@@ -155,8 +156,23 @@ socket.on("state", (state) => {
     store.setState(state)
 });
 
+
+function notify(content: string) {
+    console.log("notify", content);
+    store.setNotification(content)
+    setTimeout(() => {
+        console.log("notify", "remove notification", content);
+        store.unsetNotification();
+    }, 5000);
+}
+
+socket.on("connect", () => {
+    console.log("connection ready!")
+    notify("connection ready \\o/");
+});
+
 socket.on("disconnect", () => {
-    console.log("connexion perdue!");
+    console.log("connection lost!");
     notify("connection lost :'(");
 });
 

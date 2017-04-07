@@ -10,11 +10,13 @@ interface VoteRunProps {
 
 export class VoteRun extends React.Component<VoteRunProps, void> {
     render() {
+        var content = null;
+
         if (this.props.status == st.RunStatus.None) {
-            return (<h3>Waiting for a vote to open...</h3>);
+            content = (<h3>Waiting for a vote to open...</h3>);
         }
         if (this.props.status == st.RunStatus.Closed) {
-            return (
+            content = (
             <div>
                 <h3>Vote is closed</h3>
                 <h5>{this.props.run.Item.Name}</h5>
@@ -27,7 +29,7 @@ export class VoteRun extends React.Component<VoteRunProps, void> {
             </div>);
         }
         if (this.props.status == st.RunStatus.Open) {
-            return (
+            content = (
             <div>
                 <h3>Vote is open</h3>
                 <h5>{this.props.run.Item.Name}</h5>
@@ -38,5 +40,10 @@ export class VoteRun extends React.Component<VoteRunProps, void> {
                 </div>
             </div>);
         }
+        return (
+            <div className="vote-run">
+                {content}
+            </div>
+        );
     }
 }
