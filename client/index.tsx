@@ -185,6 +185,22 @@ socket.on("disconnect", () => {
     notify("connection lost :'(");
 });
 
+socket.on('error', (err) => {
+    console.log("error:", err)
+    notify(err);
+})
+
+socket.on('connect_error', (err) => {
+    console.log("error:", err)
+    notify(err);
+})
+
+socket.on('connect_timeout', (err) => {
+    console.log("timeout:", err)
+    notify(err);
+})
+
+
 function runVote(index: number) {
     console.log("run_vote", index);
     socket.emit("run_vote", index);

@@ -140,11 +140,12 @@ func (poker *Session) RunVote(id int) error {
 	poker.mutex.Lock()
 	defer poker.mutex.Unlock()
 
-	if id >= len(poker.Items) {
+	item := poker.Items[id]
+	if item == nil {
 		return fmt.Errorf("item %d does not exists", id)
 	}
 	poker.CurrentRun = Run{
-		Item:  poker.Items[id],
+		Item:  item,
 		Votes: make(map[int]string),
 	}
 	return nil

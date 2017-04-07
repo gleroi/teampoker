@@ -435,6 +435,18 @@ define("index", ["require", "exports", "react", "react-dom", "players", "votes",
         console.log("connection lost!");
         notify("connection lost :'(");
     });
+    socket.on('error', function (err) {
+        console.log("error:", err);
+        notify(err);
+    });
+    socket.on('connect_error', function (err) {
+        console.log("error:", err);
+        notify(err);
+    });
+    socket.on('connect_timeout', function (err) {
+        console.log("timeout:", err);
+        notify(err);
+    });
     function runVote(index) {
         console.log("run_vote", index);
         socket.emit("run_vote", index);
