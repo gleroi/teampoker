@@ -15,8 +15,14 @@ import (
 	"github.com/googollee/go-socket.io"
 )
 
+const DbFile string = "poker_session.db"
+
 func sendState(so socketio.Socket, poker *poker.Session) {
-	err := so.Emit("state", poker)
+	err := poker.Save(DbFile)
+	if err != nil {
+		log.Printf("saves state failed: %s\n", err)
+	}
+	err = so.Emit("state", poker)
 	if err != nil {
 		log.Printf("sendState failed: %s\n", err)
 	}
@@ -25,6 +31,10 @@ func sendState(so socketio.Socket, poker *poker.Session) {
 		log.Printf("sendState failed: %s\n", err)
 	}
 	log.Printf("state sended")
+
+	if r := recover(); r != nil {
+		log.Printf("recover on sendState: %v", r)
+	}
 }
 
 func getCookieId(request *http.Request) (int, error) {
@@ -40,7 +50,12 @@ func getCookieId(request *http.Request) (int, error) {
 }
 
 func main() {
-	poker := poker.NewSession()
+	session, err := poker.LoadSession(DbFile)
+	if err != nil {
+		log.Printf("error: LoadSession: %s", err)
+		log.Printf("error: creating a new session")
+		session = poker.NewSession()
+	}
 
 	server, err := socketio.NewServer(nil)
 	if err != nil {
@@ -56,23 +71,23 @@ func main() {
 			return
 		}
 
-		player := poker.NewPlayer(id)
+		player := session.NewPlayer(id)
 		log.Printf("Connection %s %d\n", so.Id(), player.Id)
 
 		so.Join("team")
 		so.Emit("join", player.Id)
-		sendState(so, poker)
+		sendState(so, session)
 
 		so.On("run_vote", func(id int) {
-			err = poker.RunVote(id)
+			err = session.RunVote(id)
 			log.Printf("run_vote pl: %d, item: %d, err: %s", player.Id, id, err)
-			sendState(so, poker)
+			sendState(so, session)
 		})
 
 		so.On("vote", func(vote string) {
-			poker.Record(player, vote)
+			session.Record(player, vote)
 			log.Printf("vote %d %s", player.Id, vote)
-			sendState(so, poker)
+			sendState(so, session)
 		})
 
 		so.On("reset_vote", func() {
@@ -81,15 +96,15 @@ func main() {
 					log.Printf("Recovering ! %s", err)
 				}
 			}()
-			poker.ResetVote()
+			session.ResetVote()
 			log.Printf("reset_vote %d", player.Id)
-			sendState(so, poker)
+			sendState(so, session)
 		})
 
 		so.On("close_vote", func() {
-			poker.CloseVote()
+			session.CloseVote()
 			log.Printf("close_vote %d", player.Id)
-			sendState(so, poker)
+			sendState(so, session)
 		})
 
 		so.On("change_name", func(name string) {
@@ -100,18 +115,18 @@ func main() {
 				Expires: time.Now().Add(24 * time.Hour),
 				Value:   name,
 			})
-			sendState(so, poker)
+			sendState(so, session)
 		})
 
 		so.On("add_item", func(item string) {
 			log.Printf("add_item %d : %s", player.Id, item)
-			poker.AddItem(item)
-			sendState(so, poker)
+			session.AddItem(item)
+			sendState(so, session)
 		})
 
 		so.On("disconnection", func() {
-			poker.RemovePlayer(player)
-			err = so.BroadcastTo("team", "state", poker)
+			session.RemovePlayer(player)
+			err = so.BroadcastTo("team", "state", session)
 			if err != nil {
 				log.Printf("sendState failed: %s\n", err)
 			}
@@ -131,7 +146,7 @@ func main() {
 			http.SetCookie(w, &http.Cookie{
 				Name:    "poker",
 				Expires: time.Now().Add(24 * time.Hour),
-				Value:   fmt.Sprintf("%d", poker.NewId()),
+				Value:   fmt.Sprintf("%d", session.NewId()),
 			})
 		}
 		_, err = r.Cookie("poker_name")

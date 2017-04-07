@@ -1,8 +1,12 @@
 // Package poker provides structures and a process to manage team poker planning sessions
 package poker
 
-import "sync"
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"sync"
+)
 
 // Session for a poker planning
 type Session struct {
@@ -50,6 +54,38 @@ func NewSession() *Session {
 		},
 	}
 	return &poker
+}
+
+func LoadSession(path string) (*Session, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	decoder := json.NewDecoder(file)
+	session := Session{}
+	err = decoder.Decode(&session)
+	if err != nil {
+		return nil, err
+	}
+	return &session, nil
+}
+
+func (poker *Session) Save(path string) error {
+	poker.mutex.Lock()
+	defer poker.mutex.Unlock()
+
+	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	encoder := json.NewEncoder(file)
+	err = encoder.Encode(poker)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // NewPlayer creates a player and add it to the poker planning session
