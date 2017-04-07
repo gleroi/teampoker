@@ -279,18 +279,27 @@ define("tasks", ["require", "exports", "react"], function (require, exports, Rea
         }
         List.prototype.render = function () {
             var _this = this;
-            return (React.createElement("div", null,
-                React.createElement("table", { className: "tasks" },
+            var items = [];
+            for (var key in this.props.items) {
+                var index = parseInt(key);
+                var item = this.props.items[key];
+                items.push(React.createElement("tr", { key: "table-item-" + index },
+                    React.createElement("td", { className: "task-name" }, item.Name),
+                    React.createElement("td", null, item.Result ? item.Result : "To do"),
+                    React.createElement("td", null,
+                        React.createElement("button", { onClick: function (e) { return _this.props.runVote(index); } },
+                            React.createElement("span", { className: "fa fa-envelope-open-o" })),
+                        React.createElement("button", { onClick: function (e) { return _this.props.deleteItem(index); } },
+                            React.createElement("span", { className: "fa fa-trash-o" })))));
+            }
+            return (React.createElement("div", { className: "tasks" },
+                React.createElement("table", { className: "tasks-list" },
                     React.createElement("thead", null,
                         React.createElement("tr", null,
                             React.createElement("th", null, "Task"),
                             React.createElement("th", null, "Status"),
                             React.createElement("th", null, "Action"))),
-                    React.createElement("tbody", null, this.props.items.map(function (item, index) { return (React.createElement("tr", { key: "table-item-" + index },
-                        React.createElement("td", { className: "task-name" }, item.Name),
-                        React.createElement("td", null, item.Result ? item.Result : "To do"),
-                        React.createElement("td", null, !item.Result &&
-                            React.createElement("button", { onClick: function (e) { return _this.props.runVote(index); } }, "Run vote")))); })))));
+                    React.createElement("tbody", null, items))));
         };
         return List;
     }(React.Component));
@@ -353,6 +362,9 @@ define("index", ["require", "exports", "react", "react-dom", "players", "votes",
         Main.prototype.resetVote = function () {
             resetVote();
         };
+        Main.prototype.deleteItem = function (index) {
+            deleteItem(index);
+        };
         Main.prototype.render = function () {
             var _this = this;
             var columnsStyle = {
@@ -387,11 +399,13 @@ define("index", ["require", "exports", "react", "react-dom", "players", "votes",
                         React.createElement("label", null, "Task \u00A0"),
                         React.createElement("input", { type: "text", className: "task", value: this.state.itemName, onChange: function (e) { return _this.onItemNameChange(e); } }),
                         React.createElement("button", { onClick: function (e) { return _this.onClickAddItem(_this.state.itemName); }, disabled: !this.state.itemName || this.state.itemName == "" }, "Add")),
-                    React.createElement(tasks.List, { items: this.state.game.Items, runVote: function (index) { return _this.runVote(index); } }))));
+                    React.createElement(tasks.List, { items: this.state.game.Items, runVote: function (index) { return _this.runVote(index); }, deleteItem: function (index) { return _this.deleteItem(index); } }))));
         };
         return Main;
     }(React.Component));
-    var socket = io();
+    var socket = io({
+        reconnection: true
+    });
     var store = new st.Store();
     Dom.render(React.createElement(Main, null), document.getElementById("main-container"));
     socket.on("join", function (id) {
@@ -452,6 +466,10 @@ define("index", ["require", "exports", "react", "react-dom", "players", "votes",
     function addItem(item) {
         console.log("add_item", item);
         socket.emit("add_item", item);
+    }
+    function deleteItem(index) {
+        console.log("delete_item", index);
+        socket.emit("delete_item", index);
     }
 });
 //# sourceMappingURL=index.js.map

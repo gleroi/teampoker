@@ -72,6 +72,10 @@ class Main extends React.Component<any, { game: st.State, itemName: string }> {
         resetVote();
     }
 
+    deleteItem(index: number) {
+        deleteItem(index);
+    }
+
     render() {
         var columnsStyle: React.CSSProperties = {
             display: "flex",
@@ -126,11 +130,14 @@ class Main extends React.Component<any, { game: st.State, itemName: string }> {
                     <input type="text" className="task"
                         value={this.state.itemName} onChange={(e) => this.onItemNameChange(e)} />
                     <button onClick={(e) => this.onClickAddItem(this.state.itemName)}
-                        disabled={!this.state.itemName || this.state.itemName == ""} >Add
-                            </button>
+                        disabled={!this.state.itemName || this.state.itemName == ""} >
+                        Add
+                    </button>
                 </div>
 
-                <tasks.List items={this.state.game.Items} runVote={(index) => this.runVote(index)} />
+                <tasks.List items={this.state.game.Items} 
+                    runVote={(index) => this.runVote(index)}
+                    deleteItem={(index) => this.deleteItem(index)} />
 
             </section>
         </div>);
@@ -138,7 +145,9 @@ class Main extends React.Component<any, { game: st.State, itemName: string }> {
 }
 
 
-var socket = io();
+var socket = io({
+    reconnection: true
+});
 var store = new st.Store();
 
 Dom.render(<Main />, document.getElementById("main-container"));
@@ -212,4 +221,9 @@ function setName(value: string) {
 function addItem(item: string) {
     console.log("add_item", item);
     socket.emit("add_item", item);
+}
+
+function deleteItem(index: number) {
+    console.log("delete_item", index);
+    socket.emit("delete_item", index);
 }

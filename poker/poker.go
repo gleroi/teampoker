@@ -11,7 +11,7 @@ import (
 // Session for a poker planning
 type Session struct {
 	Players    map[int]*Player
-	Items      []*Item
+	Items      map[int]*Item
 	CurrentRun Run
 	mutex      sync.Mutex
 }
@@ -38,6 +38,10 @@ var globalID int
 func (poker *Session) NewId() int {
 	poker.mutex.Lock()
 	defer poker.mutex.Unlock()
+	return nextId()
+}
+
+func nextId() int {
 	ID := globalID
 	globalID++
 	return ID
@@ -47,7 +51,7 @@ func (poker *Session) NewId() int {
 func NewSession() *Session {
 	poker := Session{
 		Players: make(map[int]*Player),
-		Items:   make([]*Item, 0, 32),
+		Items:   make(map[int]*Item),
 		CurrentRun: Run{
 			Item:  nil,
 			Votes: make(map[int]string),
@@ -119,10 +123,17 @@ func (poker *Session) AddItem(item string) {
 	poker.mutex.Lock()
 	defer poker.mutex.Unlock()
 
-	poker.Items = append(poker.Items, &Item{
+	poker.Items[nextId()] = &Item{
 		Name:   item,
 		Result: "",
-	})
+	}
+}
+
+func (poker *Session) DeleteItem(itemID int) {
+	poker.mutex.Lock()
+	defer poker.mutex.Unlock()
+
+	delete(poker.Items, itemID)
 }
 
 func (poker *Session) RunVote(id int) error {

@@ -124,6 +124,12 @@ func main() {
 			sendState(so, session)
 		})
 
+		so.On("delete_item", func(itemID int) {
+			log.Printf("delete_item %d : %d", player.Id, itemID)
+			session.DeleteItem(itemID)
+			sendState(so, session)
+		})
+
 		so.On("disconnection", func() {
 			session.RemovePlayer(player)
 			err = so.BroadcastTo("team", "state", session)
