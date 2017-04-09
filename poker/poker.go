@@ -72,6 +72,16 @@ func LoadSession(path string) (*Session, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if session.CurrentRun.Item != nil {
+		for _, item := range session.Items {
+			if item.Name == session.CurrentRun.Item.Name {
+				session.CurrentRun.Item = item
+				break
+			}
+		}
+	}
+
 	return &session, nil
 }
 
@@ -177,20 +187,34 @@ func (poker *Session) CloseVote() {
 	if poker.CurrentRun.Item == nil {
 		return
 	}
+
+	vote := findBestVote(poker.CurrentRun.Votes)
+	poker.CurrentRun.Item.Result = vote
+	poker.CurrentRun.Item.Historic = poker.CurrentRun.Votes
+}
+
+func findBestVote(votes map[int]string) string {
 	result := make(map[string]int)
-	for _, vote := range poker.CurrentRun.Votes {
+	for _, vote := range votes {
 		result[vote] = result[vote] + 1
 	}
 	var selectedCount int
+	var tieCount int
 	var selectedVote string
 	for vote, count := range result {
-		if count >= selectedCount {
-			selectedVote = vote
+		if count == selectedCount && selectedVote != "" {
+			tieCount++
+		}
+		if count > selectedCount {
 			selectedCount = count
+			selectedVote = vote
+			tieCount = 0
 		}
 	}
-	poker.CurrentRun.Item.Result = selectedVote
-	poker.CurrentRun.Item.Historic = poker.CurrentRun.Votes
+	if tieCount > 0 {
+		return "tie"
+	}
+	return selectedVote
 }
 
 func (p *Player) ChangeName(name string) {
