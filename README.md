@@ -6,6 +6,6 @@ web server running a team poker planning.
 
 - [ ] load items to vote for from JIRA
 - [X] handle vote ending on a tie
-- [ ] better vote result display
+- [X] better vote result display
 - [ ] handle different type of vote value
 - [ ] handle multiple sessions
