@@ -107,9 +107,12 @@ class Main extends React.Component<any, { game: st.State, itemName: string }> {
             </section>
 
             <section style={columnsStyle}>
-                <div>
+                <div style={{width: "100%"}}>
                     <section>
-                        <cards.List vote={this.onVote} myvote={this.myVote()} />
+                        {this.state.game.runStatus() == st.RunStatus.Closed ?
+                            (<votes.VoteResult run={this.state.game.CurrentRun} />) :
+                            (<cards.List vote={this.onVote} myvote={this.myVote()} />)
+                        }
                     </section>
                 </div>
 
@@ -135,7 +138,7 @@ class Main extends React.Component<any, { game: st.State, itemName: string }> {
                     </button>
                 </div>
 
-                <tasks.List items={this.state.game.Items} 
+                <tasks.List items={this.state.game.Items}
                     runVote={(index) => this.runVote(index)}
                     deleteItem={(index) => this.deleteItem(index)} />
 

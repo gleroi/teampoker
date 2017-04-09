@@ -70,6 +70,23 @@ define("cards", ["require", "exports", "react"], function (require, exports, Rea
     }(React.Component));
     exports.List = List;
 });
+define("colors", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.Palette = [
+        "#F44336",
+        "#673AB7",
+        "#3F51B5",
+        "#E91E63",
+        "#9C27B0",
+        "#2196F3",
+        "#4CAF50",
+        "#FFEB3B",
+        "#00BCD4",
+        "#009688",
+        "#FF5722"
+    ];
+});
 define("store", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -149,22 +166,9 @@ define("store", ["require", "exports"], function (require, exports) {
     }());
     exports.Store = Store;
 });
-define("players", ["require", "exports", "react"], function (require, exports, React) {
+define("players", ["require", "exports", "react", "colors"], function (require, exports, React, colors) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var colorPalette = [
-        "#F44336",
-        "#673AB7",
-        "#3F51B5",
-        "#E91E63",
-        "#9C27B0",
-        "#2196F3",
-        "#4CAF50",
-        "#FFEB3B",
-        "#00BCD4",
-        "#009688",
-        "#FF5722"
-    ];
     var Player = (function (_super) {
         __extends(Player, _super);
         function Player() {
@@ -176,7 +180,7 @@ define("players", ["require", "exports", "react"], function (require, exports, R
             };
             var iconStyle = {
                 fontSize: "16pt",
-                color: colorPalette[this.props.player.Id % colorPalette.length]
+                color: colors.Palette[this.props.player.Id % colors.Palette.length]
             };
             var voteStyle = {
                 fontSize: "16pt",
@@ -241,7 +245,7 @@ define("players", ["require", "exports", "react"], function (require, exports, R
     }(React.Component));
     exports.List = List;
 });
-define("votes", ["require", "exports", "react", "store"], function (require, exports, React, st) {
+define("votes", ["require", "exports", "react", "store", "colors"], function (require, exports, React, st, colors) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var VoteRun = (function (_super) {
@@ -278,6 +282,44 @@ define("votes", ["require", "exports", "react", "store"], function (require, exp
         return VoteRun;
     }(React.Component));
     exports.VoteRun = VoteRun;
+    var VoteResult = (function (_super) {
+        __extends(VoteResult, _super);
+        function VoteResult() {
+            return _super !== null && _super.apply(this, arguments) || this;
+        }
+        VoteResult.prototype.render = function () {
+            var stats = {};
+            var historic = this.props.run.Item.Historic;
+            var total = 0;
+            for (var key in historic) {
+                var vote = historic[key];
+                if (stats[vote] == undefined) {
+                    stats[vote] = 1;
+                }
+                else {
+                    stats[vote] = stats[vote] + 1;
+                }
+                total += 1;
+            }
+            var statBars = [];
+            var index = 0;
+            for (var key in stats) {
+                var count = stats[key];
+                var color = colors.Palette[index % colors.Palette.length];
+                index++;
+                statBars.push(React.createElement("div", { key: "results-vote-" + key, style: { width: "100%", margin: "3px 0" } },
+                    React.createElement("span", { style: { display: "inline-block", width: 31 } }, key),
+                    React.createElement("div", { style: {
+                            display: "inline-block",
+                            backgroundColor: color,
+                            width: (count / total * 100.0) + "%"
+                        } }, "\u00A0")));
+            }
+            return (React.createElement("div", null, statBars));
+        };
+        return VoteResult;
+    }(React.Component));
+    exports.VoteResult = VoteResult;
 });
 define("tasks", ["require", "exports", "react"], function (require, exports, React) {
     "use strict";
@@ -396,9 +438,10 @@ define("index", ["require", "exports", "react", "react-dom", "players", "votes",
                 React.createElement("section", null,
                     React.createElement(votes.VoteRun, { run: this.state.game.CurrentRun, status: this.state.game.runStatus(), closeVote: this.closeVote, resetVote: this.resetVote })),
                 React.createElement("section", { style: columnsStyle },
-                    React.createElement("div", null,
-                        React.createElement("section", null,
-                            React.createElement(cards.List, { vote: this.onVote, myvote: this.myVote() }))),
+                    React.createElement("div", { style: { width: "100%" } },
+                        React.createElement("section", null, this.state.game.runStatus() == st.RunStatus.Closed ?
+                            (React.createElement(votes.VoteResult, { run: this.state.game.CurrentRun })) :
+                            (React.createElement(cards.List, { vote: this.onVote, myvote: this.myVote() })))),
                     React.createElement("div", null,
                         React.createElement("div", null,
                             React.createElement("label", null, "Changer de nom :"),

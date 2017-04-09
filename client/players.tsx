@@ -1,24 +1,13 @@
 import * as React from "react";
-import * as st from "./store"
+import * as st from "./store";
+import * as colors from "./colors";
 
 interface PlayerProps {
     player: st.Player
     voted: boolean | string
 }
 
-var colorPalette = [
-    "#F44336",
-    "#673AB7",
-    "#3F51B5",
-    "#E91E63",
-    "#9C27B0",
-    "#2196F3",
-    "#4CAF50",
-    "#FFEB3B",
-    "#00BCD4",
-    "#009688",
-    "#FF5722"
-];
+
 
 class Player extends React.Component<PlayerProps, any> {
     render() {
@@ -28,7 +17,7 @@ class Player extends React.Component<PlayerProps, any> {
 
         var iconStyle: React.CSSProperties = {
             fontSize: "16pt",
-            color: colorPalette[this.props.player.Id % colorPalette.length]
+            color: colors.Palette[this.props.player.Id % colors.Palette.length]
         };
 
         var voteStyle: React.CSSProperties = {
