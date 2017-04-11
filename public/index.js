@@ -74,17 +74,17 @@ define("colors", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Palette = [
-        "#F44336",
         "#673AB7",
-        "#3F51B5",
         "#E91E63",
-        "#9C27B0",
         "#2196F3",
+        "#9C27B0",
         "#4CAF50",
+        "#3F51B5",
+        "#F44336",
         "#FFEB3B",
         "#00BCD4",
-        "#009688",
-        "#FF5722"
+        "#FF5722",
+        "#009688"
     ];
 });
 define("store", ["require", "exports"], function (require, exports) {
@@ -184,7 +184,7 @@ define("players", ["require", "exports", "react", "colors"], function (require, 
             };
             var voteStyle = {
                 fontSize: "16pt",
-                color: "#cddc39",
+                color: "#3F51B5",
                 float: "right"
             };
             var _a = this.props, player = _a.player, voted = _a.voted, others = __rest(_a, ["player", "voted"]);
@@ -306,14 +306,20 @@ define("votes", ["require", "exports", "react", "store", "colors"], function (re
             for (var key in stats) {
                 var count = stats[key];
                 var color = colors.Palette[index % colors.Palette.length];
+                var percentage = (count / total * 100.0);
                 index++;
                 statBars.push(React.createElement("div", { key: "results-vote-" + key, style: { width: "100%", margin: "3px 0" } },
                     React.createElement("span", { style: { display: "inline-block", width: 31 } }, key),
                     React.createElement("div", { style: {
                             display: "inline-block",
                             backgroundColor: color,
-                            width: (count / total * 100.0) + "%"
-                        } }, "\u00A0")));
+                            width: (0.8 * percentage) + "%"
+                        } }, "\u00A0"),
+                    React.createElement("div", { style: {
+                            display: "inline-block",
+                            width: (0.8 * (100 - percentage)) + "%"
+                        } }, "\u00A0"),
+                    React.createElement("span", { style: { float: "right", paddingRight: 13 } }, percentage.toFixed(1) + "%")));
             }
             return (React.createElement("div", null, statBars));
         };

@@ -22,7 +22,7 @@ class Player extends React.Component<PlayerProps, any> {
 
         var voteStyle: React.CSSProperties = {
             fontSize: "16pt",
-            color: "#cddc39",
+            color: "#3F51B5",
             float: "right"
         };
 

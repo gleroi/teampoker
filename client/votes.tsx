@@ -74,6 +74,7 @@ export class VoteResult extends React.Component<VoteResultProps, void> {
         for (let key in stats) {
             var count = stats[key];
             var color = colors.Palette[index % colors.Palette.length];
+            var percentage = (count / total * 100.0)
             index++;
             statBars.push(
                 <div key={"results-vote-" + key} style={{ width: "100%", margin: "3px 0"}}>
@@ -81,8 +82,13 @@ export class VoteResult extends React.Component<VoteResultProps, void> {
                     <div style={{
                         display: "inline-block",
                         backgroundColor: color,
-                        width: (count / total * 100.0) + "%"
+                        width: (0.8 * percentage) + "%"
                     }}>&nbsp;</div>
+                    <div style={{
+                        display: "inline-block",
+                        width: (0.8 * (100 - percentage)) + "%"
+                    }}>&nbsp;</div>
+                    <span style={{ float: "right", paddingRight: 13}}>{percentage.toFixed(1) + "%"}</span>
                 </div>
             )
         }
