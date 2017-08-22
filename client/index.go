@@ -2,8 +2,10 @@ package main
 
 import (
 	"github.com/gleroi/teampoker/client/cards"
+	"github.com/gleroi/teampoker/client/players"
 	"github.com/gopherjs/vecty"
 	"github.com/gopherjs/vecty/elem"
+	"github.com/gopherjs/vecty/prop"
 )
 
 type Main struct {
@@ -16,8 +18,17 @@ func (m *Main) Render() *vecty.HTML {
 			elem.Heading1(vecty.Text("Teampoker")),
 		),
 		elem.Div(
-			cards.Card(),
-		))
+			elem.Heading3(vecty.Text("No vote running")),
+			elem.Div(
+				elem.Button(vecty.Text("Reset vote")),
+				elem.Button(vecty.Text("Close vote")),
+			),
+		),
+		elem.Div(prop.Class("content"),
+			cards.Container(),
+			players.List(),
+		),
+	)
 }
 
 func main() {
