@@ -12,7 +12,7 @@ import (
 
 	"fmt"
 
-	"github.com/googollee/go-socket.io"
+	socketio "github.com/googollee/go-socket.io"
 )
 
 const DbFile string = "poker_session.db"
@@ -22,6 +22,7 @@ func sendState(so socketio.Socket, poker *poker.Session) {
 	if err != nil {
 		log.Printf("saves state failed: %s\n", err)
 	}
+
 	err = so.Emit("state", poker)
 	if err != nil {
 		log.Printf("sendState failed: %s\n", err)

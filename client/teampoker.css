@@ -21,8 +21,7 @@ body {
     flex-grow: 1;
     width: 20%;
     margin: 7px;
-    border: 1px solid green;
-    border-radius: 7px;
+    border: 2px solid green;
 }
 
 .card-selected {
@@ -43,7 +42,6 @@ body {
     margin: 20px 13px;
     margin-left: -300px;
     border: 1px solid green;
-    border-radius: 7px;
 }
 
 .players-header {
