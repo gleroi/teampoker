@@ -168,8 +168,11 @@ func main() {
 		dir.ServeHTTP(w, r)
 	}
 
-	http.Handle("/socket.io/", server)
+	http.HandleFunc("/socket.io/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Access-Control-Allow-Origin", "*")
+		server.ServeHTTP(w, r)
+	})
 	http.HandleFunc("/", handler)
-	log.Println("Listening on localhost:8080...")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Println("Listening on localhost:8081...")
+	log.Fatal(http.ListenAndServe(":8081", nil))
 }
