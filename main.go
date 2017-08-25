@@ -69,7 +69,7 @@ func main() {
 		id, err := getCookieId(so.Request())
 		if err != nil {
 			log.Printf("error: %s", err)
-			return
+			id = 42
 		}
 
 		player := session.NewPlayer(id)
