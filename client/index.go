@@ -3,9 +3,11 @@ package main
 import (
 	"log"
 
+	"github.com/gleroi/teampoker/poker"
+
 	"github.com/gleroi/teampoker/client/cards"
 	"github.com/gleroi/teampoker/client/players"
-	"github.com/gleroi/teampoker/socketio_client"
+	"github.com/gleroi/teampoker/socketio"
 	"github.com/gopherjs/vecty"
 	"github.com/gopherjs/vecty/elem"
 	"github.com/gopherjs/vecty/prop"
@@ -35,32 +37,29 @@ func (m *Main) Render() *vecty.HTML {
 }
 
 func main() {
-	opts := &socketio_client.Options{
-		//Transport:"polling",
-		Transport: "websocket",
-		Query:     make(map[string]string),
-	}
+
 	uri := "http://localhost:8081"
-	client, err := socketio_client.NewClient(uri, opts)
-	if err != nil {
-		log.Printf("NewClient error:%v\n", err)
-		return
-	}
-
-	client.On("error", func() {
-		log.Printf("on error\n")
+	c := socketio.New(uri)
+	c.On("connect", func(v ...interface{}) {
+		println("connected", c.Id)
 	})
 
-	client.On("connection", func() {
-		log.Printf("on connect\n")
+	c.On("join", func(v ...interface{}) {
+		if len(v) > 0 {
+			if id, ok := v[0].(float64); ok {
+				log.Printf("join id: %v (%T)", id, id)
+			}
+		}
 	})
 
-	client.On("message", func(msg string) {
-		log.Printf("on message:%v\n", msg)
-	})
-
-	client.On("disconnection", func() {
-		log.Printf("on disconnect\n")
+	c.On("state", func(v ...interface{}) {
+		log.Printf("%T", v[0])
+		s, _ := v[0].(poker.Session)
+		log.Printf("%+v %T", s, s)
+		for k, v := range s.Players {
+			log.Printf("pl: %v %+v", k, v)
+		}
+		log.Printf("%+v", s.CurrentRun)
 	})
 
 	vecty.AddStylesheet("font-awesome.css")

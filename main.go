@@ -169,7 +169,9 @@ func main() {
 	}
 
 	http.HandleFunc("/socket.io/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Access-Control-Allow-Origin", "*")
+		w.Header().Add("Access-Control-Allow-Origin", "http://localhost:8080")
+		w.Header().Add("Access-Control-Allow-Credentials", "true")
+
 		server.ServeHTTP(w, r)
 	})
 	http.HandleFunc("/", handler)
