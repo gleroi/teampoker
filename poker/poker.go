@@ -8,12 +8,16 @@ import (
 	"sync"
 )
 
+type SessionSate struct {
+	Players    map[int]Player
+	Items      map[int]Item
+	CurrentRun Run
+}
+
 // Session for a poker planning
 type Session struct {
-	Players    map[int]*Player
-	Items      map[int]*Item
-	CurrentRun Run
-	mutex      sync.Mutex
+	SessionSate
+	mutex sync.Mutex
 }
 
 // Player is a participant in the poker planning session
@@ -50,11 +54,13 @@ func nextId() int {
 // NewSession initializes a new poker planning session
 func NewSession() *Session {
 	poker := Session{
-		Players: make(map[int]*Player),
-		Items:   make(map[int]*Item),
-		CurrentRun: Run{
-			Item:  nil,
-			Votes: make(map[int]string),
+		SessionSate: SessionSate{
+			Players: make(map[int]Player),
+			Items:   make(map[int]Item),
+			CurrentRun: Run{
+				Item:  nil,
+				Votes: make(map[int]string),
+			},
 		},
 	}
 	return &poker
@@ -76,7 +82,7 @@ func LoadSession(path string) (*Session, error) {
 	if session.CurrentRun.Item != nil {
 		for _, item := range session.Items {
 			if item.Name == session.CurrentRun.Item.Name {
-				session.CurrentRun.Item = item
+				session.CurrentRun.Item = &item
 				break
 			}
 		}
@@ -103,13 +109,14 @@ func (poker *Session) Save(path string) error {
 }
 
 // NewPlayer creates a player and add it to the poker planning session
-func (poker *Session) NewPlayer(id int) *Player {
+func (poker *Session) NewPlayer(id int) Player {
 	poker.mutex.Lock()
 	defer poker.mutex.Unlock()
 
+	empty := Player{}
 	p := poker.Players[id]
-	if p == nil {
-		p = &Player{
+	if p == empty {
+		p = Player{
 			Id:   id,
 			Name: "default",
 		}
@@ -118,7 +125,7 @@ func (poker *Session) NewPlayer(id int) *Player {
 			poker.CurrentRun.Votes[p.Id] = ""
 		}
 	}
-	return p
+	return poker.Players[p.Id]
 }
 
 func (poker *Session) RemovePlayer(p *Player) {
@@ -133,7 +140,7 @@ func (poker *Session) AddItem(item string) {
 	poker.mutex.Lock()
 	defer poker.mutex.Unlock()
 
-	poker.Items[nextId()] = &Item{
+	poker.Items[nextId()] = Item{
 		Name:   item,
 		Result: "",
 	}
@@ -150,12 +157,12 @@ func (poker *Session) RunVote(id int) error {
 	poker.mutex.Lock()
 	defer poker.mutex.Unlock()
 
-	item := poker.Items[id]
-	if item == nil {
+	item, ok := poker.Items[id]
+	if !ok {
 		return fmt.Errorf("item %d does not exists", id)
 	}
 	poker.CurrentRun = Run{
-		Item:  item,
+		Item:  &item,
 		Votes: make(map[int]string),
 	}
 	return nil

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"log"
 
 	"github.com/gleroi/teampoker/poker"
@@ -15,6 +17,8 @@ import (
 
 type Main struct {
 	vecty.Core
+
+	state *poker.SessionSate
 }
 
 func (m *Main) Render() *vecty.HTML {
@@ -31,12 +35,25 @@ func (m *Main) Render() *vecty.HTML {
 		),
 		elem.Div(prop.Class("content"),
 			cards.Container(),
-			players.List(),
+			players.List(m.state.Players),
 		),
 	)
 }
 
 func main() {
+	root := &Main{
+		state: &poker.SessionSate{
+			Players: make(map[int]poker.Player),
+			Items:   make(map[int]poker.Item),
+			CurrentRun: poker.Run{
+				Item:  nil,
+				Votes: make(map[int]string),
+			},
+		},
+	}
+	vecty.AddStylesheet("font-awesome.css")
+	vecty.AddStylesheet("teampoker.css")
+	vecty.RenderBody(root)
 
 	uri := "http://localhost:8081"
 	c := socketio.New(uri)
@@ -53,16 +70,19 @@ func main() {
 	})
 
 	c.On("state", func(v ...interface{}) {
-		log.Printf("%T", v[0])
-		s, _ := v[0].(poker.Session)
-		log.Printf("%+v %T", s, s)
-		for k, v := range s.Players {
-			log.Printf("pl: %v %+v", k, v)
+		stateB64, _ := v[0].(string)
+		stateJson, err := base64.StdEncoding.DecodeString(stateB64)
+		if err != nil {
+			log.Printf("state: b64 deserialization failed: %s", err)
 		}
-		log.Printf("%+v", s.CurrentRun)
+		state := &poker.SessionSate{}
+		err = json.Unmarshal(stateJson, &state)
+		if err != nil {
+			log.Printf("state: json deserialization failed: %s", err)
+		}
+		log.Printf("state: %+v", state)
+		root.state = state
+		vecty.Rerender(root)
 	})
 
-	vecty.AddStylesheet("font-awesome.css")
-	vecty.AddStylesheet("teampoker.css")
-	vecty.RenderBody(&Main{})
 }

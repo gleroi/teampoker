@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 
@@ -23,7 +24,11 @@ func sendState(so socketio.Socket, poker *poker.Session) {
 		log.Printf("saves state failed: %s\n", err)
 	}
 
-	err = so.Emit("state", poker)
+	pokerJson, err := json.Marshal(poker.SessionSate)
+	if err != nil {
+		log.Printf("sendState failed: serialization: %s\n", err)
+	}
+	err = so.Emit("state", pokerJson)
 	if err != nil {
 		log.Printf("sendState failed: %s\n", err)
 	}

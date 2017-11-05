@@ -1,6 +1,7 @@
 package players
 
 import (
+	"github.com/gleroi/teampoker/poker"
 	"github.com/gopherjs/vecty"
 	"github.com/gopherjs/vecty/elem"
 	"github.com/gopherjs/vecty/prop"
@@ -30,9 +31,17 @@ func Player(name string) *PlayerComponent {
 
 type ListComponent struct {
 	vecty.Core
+
+	players map[int]poker.Player
 }
 
 func (l *ListComponent) Render() *vecty.HTML {
+	players := make([]vecty.MarkupOrComponentOrHTML, 1)
+	players = append(players, prop.Class("players-list-players"))
+	for _, p := range l.players {
+		players = append(players, Player(p.Name))
+	}
+
 	return elem.Div(
 		prop.Class("players-list"),
 		elem.Div(
@@ -40,12 +49,7 @@ func (l *ListComponent) Render() *vecty.HTML {
 			vecty.Text("Participants"),
 		),
 		elem.Div(
-			prop.Class("players-list-players"),
-			Player("Guillaume"),
-			Player("Paul"),
-			Player("Célia"),
-			Player("Vladimir"),
-			Player("Ramatioenzseo"),
+			players...,
 		),
 		elem.Div(
 			vecty.Text("footer 2017"),
@@ -53,6 +57,8 @@ func (l *ListComponent) Render() *vecty.HTML {
 	)
 }
 
-func List() *ListComponent {
-	return &ListComponent{}
+func List(players map[int]poker.Player) *ListComponent {
+	return &ListComponent{
+		players: players,
+	}
 }
