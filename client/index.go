@@ -46,7 +46,6 @@ func main() {
 			Players: make(map[int]poker.Player),
 			Items:   make(map[int]poker.Item),
 			CurrentRun: poker.Run{
-				Item:  nil,
 				Votes: make(map[int]string),
 			},
 		},

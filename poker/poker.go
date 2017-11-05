@@ -33,7 +33,7 @@ type Item struct {
 }
 
 type Run struct {
-	Item  *Item
+	Item  int
 	Votes map[int]string
 }
 
@@ -58,7 +58,6 @@ func NewSession() *Session {
 			Players: make(map[int]Player),
 			Items:   make(map[int]Item),
 			CurrentRun: Run{
-				Item:  nil,
 				Votes: make(map[int]string),
 			},
 		},
@@ -77,15 +76,6 @@ func LoadSession(path string) (*Session, error) {
 	err = decoder.Decode(&session)
 	if err != nil {
 		return nil, err
-	}
-
-	if session.CurrentRun.Item != nil {
-		for _, item := range session.Items {
-			if item.Name == session.CurrentRun.Item.Name {
-				session.CurrentRun.Item = &item
-				break
-			}
-		}
 	}
 
 	return &session, nil
@@ -128,7 +118,7 @@ func (poker *Session) NewPlayer(id int) Player {
 	return poker.Players[p.Id]
 }
 
-func (poker *Session) RemovePlayer(p *Player) {
+func (poker *Session) RemovePlayer(p Player) {
 	poker.mutex.Lock()
 	defer poker.mutex.Unlock()
 
@@ -157,18 +147,18 @@ func (poker *Session) RunVote(id int) error {
 	poker.mutex.Lock()
 	defer poker.mutex.Unlock()
 
-	item, ok := poker.Items[id]
+	_, ok := poker.Items[id]
 	if !ok {
 		return fmt.Errorf("item %d does not exists", id)
 	}
 	poker.CurrentRun = Run{
-		Item:  &item,
+		Item:  id,
 		Votes: make(map[int]string),
 	}
 	return nil
 }
 
-func (poker *Session) Record(player *Player, vote string) {
+func (poker *Session) Record(player Player, vote string) {
 	poker.mutex.Lock()
 	defer poker.mutex.Unlock()
 
@@ -183,21 +173,25 @@ func (poker *Session) ResetVote() {
 	for _, p := range poker.Players {
 		poker.CurrentRun.Votes[p.Id] = ""
 	}
-	poker.CurrentRun.Item.Result = ""
-	poker.CurrentRun.Item.Historic = nil
+	item := poker.Items[poker.CurrentRun.Item]
+	item.Result = ""
+	item.Historic = nil
+	poker.Items[poker.CurrentRun.Item] = item
 }
 
 func (poker *Session) CloseVote() {
 	poker.mutex.Lock()
 	defer poker.mutex.Unlock()
 
-	if poker.CurrentRun.Item == nil {
+	item, ok := poker.Items[poker.CurrentRun.Item]
+	if !ok {
 		return
 	}
 
 	vote := findBestVote(poker.CurrentRun.Votes)
-	poker.CurrentRun.Item.Result = vote
-	poker.CurrentRun.Item.Historic = poker.CurrentRun.Votes
+	item.Result = vote
+	item.Historic = poker.CurrentRun.Votes
+	poker.Items[poker.CurrentRun.Item] = item
 }
 
 func findBestVote(votes map[int]string) string {

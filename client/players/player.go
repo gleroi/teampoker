@@ -1,9 +1,12 @@
 package players
 
 import (
+	"log"
+
 	"github.com/gleroi/teampoker/poker"
 	"github.com/gopherjs/vecty"
 	"github.com/gopherjs/vecty/elem"
+	"github.com/gopherjs/vecty/event"
 	"github.com/gopherjs/vecty/prop"
 )
 
@@ -33,6 +36,16 @@ type ListComponent struct {
 	vecty.Core
 
 	players map[int]poker.Player
+	name    string
+}
+
+func (l *ListComponent) OnNameChange(e *vecty.Event) {
+	l.name = e.Target.Get("value").String()
+	vecty.Rerender(l)
+}
+
+func (l *ListComponent) OnRename(e *vecty.Event) {
+	log.Printf("onrename: %v", l.name)
 }
 
 func (l *ListComponent) Render() *vecty.HTML {
@@ -52,7 +65,12 @@ func (l *ListComponent) Render() *vecty.HTML {
 			players...,
 		),
 		elem.Div(
-			vecty.Text("footer 2017"),
+			elem.Input(prop.Type("text"),
+				event.Change(l.OnNameChange)),
+			elem.Button(
+				vecty.Text("Renommer"),
+				event.Click(l.OnRename),
+			),
 		),
 	)
 }
