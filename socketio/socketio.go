@@ -19,3 +19,10 @@ func New(url string) *Socket {
 func (s *Socket) On(msg string, callback func(v ...interface{})) {
 	s.Call("on", msg, callback)
 }
+
+func (s *Socket) Emit(msg string, args ...interface{}) {
+	v := make([]interface{}, 0, len(args)+1)
+	v = append(v, msg)
+	v = append(v, args...)
+	s.Call("emit", v...)
+}

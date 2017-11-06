@@ -118,6 +118,18 @@ func (poker *Session) NewPlayer(id int) Player {
 	return poker.Players[p.Id]
 }
 
+func (poker *Session) ChangeName(id int, name string) {
+	poker.mutex.Lock()
+	defer poker.mutex.Unlock()
+
+	p, ok := poker.Players[id]
+	if !ok {
+		return
+	}
+	p.Name = name
+	poker.Players[id] = p
+}
+
 func (poker *Session) RemovePlayer(p Player) {
 	poker.mutex.Lock()
 	defer poker.mutex.Unlock()
@@ -216,8 +228,4 @@ func findBestVote(votes map[int]string) string {
 		return "tie"
 	}
 	return selectedVote
-}
-
-func (p *Player) ChangeName(name string) {
-	p.Name = name
 }

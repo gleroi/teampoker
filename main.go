@@ -74,7 +74,7 @@ func main() {
 		id, err := getCookieId(so.Request())
 		if err != nil {
 			log.Printf("error: %s", err)
-			id = 42
+			id = session.NewId()
 		}
 
 		player := session.NewPlayer(id)
@@ -115,7 +115,7 @@ func main() {
 
 		so.On("change_name", func(name string) {
 			log.Printf("change_name %d %s\n", player.Id, name)
-			player.ChangeName(name)
+			session.ChangeName(player.Id, name)
 			so.Request().AddCookie(&http.Cookie{
 				Name:    "poker_name",
 				Expires: time.Now().Add(24 * time.Hour),

@@ -3,6 +3,7 @@ package players
 import (
 	"log"
 
+	"github.com/gleroi/teampoker/client/api"
 	"github.com/gleroi/teampoker/poker"
 	"github.com/gopherjs/vecty"
 	"github.com/gopherjs/vecty/elem"
@@ -46,6 +47,8 @@ func (l *ListComponent) OnNameChange(e *vecty.Event) {
 
 func (l *ListComponent) OnRename(e *vecty.Event) {
 	log.Printf("onrename: %v", l.name)
+	api.Rename(l.name)
+	l.name = ""
 }
 
 func (l *ListComponent) Render() *vecty.HTML {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/gleroi/teampoker/poker"
 
+	"github.com/gleroi/teampoker/client/api"
 	"github.com/gleroi/teampoker/client/cards"
 	"github.com/gleroi/teampoker/client/players"
 	"github.com/gleroi/teampoker/socketio"
@@ -56,6 +57,7 @@ func main() {
 
 	uri := "http://localhost:8081"
 	c := socketio.New(uri)
+	api.Socket = c
 	c.On("connect", func(v ...interface{}) {
 		println("connected", c.Id)
 	})
@@ -75,6 +77,7 @@ func main() {
 			log.Printf("state: b64 deserialization failed: %s", err)
 		}
 		state := &poker.SessionSate{}
+		log.Printf("state: %s", string(stateJson))
 		err = json.Unmarshal(stateJson, &state)
 		if err != nil {
 			log.Printf("state: json deserialization failed: %s", err)
