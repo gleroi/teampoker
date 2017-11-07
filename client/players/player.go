@@ -49,6 +49,7 @@ func (l *ListComponent) OnRename(e *vecty.Event) {
 	log.Printf("onrename: %v", l.name)
 	api.Rename(l.name)
 	l.name = ""
+	vecty.Rerender(l)
 }
 
 func (l *ListComponent) Render() *vecty.HTML {
@@ -69,7 +70,8 @@ func (l *ListComponent) Render() *vecty.HTML {
 		),
 		elem.Div(
 			elem.Input(prop.Type("text"),
-				event.Change(l.OnNameChange)),
+				event.Change(l.OnNameChange),
+				prop.Value(l.name)),
 			elem.Button(
 				vecty.Text("Renommer"),
 				event.Click(l.OnRename),

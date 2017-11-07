@@ -1,6 +1,7 @@
 package cards
 
 import (
+	"github.com/gleroi/teampoker/client/api"
 	"github.com/gopherjs/vecty"
 	"github.com/gopherjs/vecty/elem"
 	"github.com/gopherjs/vecty/event"
@@ -25,27 +26,36 @@ func (c *CardComponent) Render() *vecty.HTML {
 }
 
 func (c *CardComponent) OnClick(e *vecty.Event) {
-	c.selected = !c.selected
+	api.Vote(c.label)
 	vecty.Rerender(c)
 }
 
-func Card(label string) *CardComponent {
+func Card(label string, selected bool) *CardComponent {
 	return &CardComponent{
-		label: label,
+		label:    label,
+		selected: selected,
 	}
 }
 
 type ContainerComponent struct {
 	vecty.Core
+
+	myVote string
 }
 
 func (c *ContainerComponent) Render() *vecty.HTML {
+	votes := []string{"1", "2", "3", "5", "8", "13", "21", "\u2615", "\u221e"}
+	cards := make([]vecty.MarkupOrComponentOrHTML, len(votes))
+	for i, vote := range votes {
+		cards[i] = Card(vote, vote == c.myVote)
+	}
 	return elem.Div(prop.Class("cards-container"),
-		Card("1"), Card("2"), Card("3"), Card("5"), Card("8"), Card("13"), Card("21"),
-		Card("\u2615"), Card("\u221e"),
+		elem.Div(cards...),
 	)
 }
 
-func Container() *ContainerComponent {
-	return new(ContainerComponent)
+func Container(vote string) *ContainerComponent {
+	return &ContainerComponent{
+		myVote: vote,
+	}
 }

@@ -10,3 +10,10 @@ func Rename(name string) {
 	}
 	Socket.Emit("change_name", name)
 }
+
+func Vote(vote string) {
+	if Socket == nil {
+		return
+	}
+	Socket.Emit("vote", vote)
+}

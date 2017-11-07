@@ -13,8 +13,6 @@ import (
 
 	"strconv"
 
-	"fmt"
-
 	socketio "github.com/googollee/go-socket.io"
 )
 
@@ -157,24 +155,6 @@ func main() {
 
 	dir := http.FileServer(http.Dir("public"))
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		_, err := r.Cookie("poker")
-		if err != nil {
-			log.Printf("error /: %s", err)
-			http.SetCookie(w, &http.Cookie{
-				Name:    "poker",
-				Expires: time.Now().Add(24 * time.Hour),
-				Value:   fmt.Sprintf("%d", session.NewId()),
-			})
-		}
-		_, err = r.Cookie("poker_name")
-		if err != nil {
-			log.Printf("error /: %s", err)
-			http.SetCookie(w, &http.Cookie{
-				Name:    "poker_name",
-				Expires: time.Now().Add(24 * time.Hour),
-				Value:   "default",
-			})
-		}
 		dir.ServeHTTP(w, r)
 	}
 
@@ -190,9 +170,6 @@ func main() {
 	})
 
 	http.HandleFunc("/socket.io/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Access-Control-Allow-Origin", "http://localhost:8080")
-		w.Header().Add("Access-Control-Allow-Credentials", "true")
-
 		server.ServeHTTP(w, r)
 	})
 	http.HandleFunc("/", handler)

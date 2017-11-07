@@ -19,7 +19,8 @@ import (
 type Main struct {
 	vecty.Core
 
-	state *poker.SessionSate
+	state    *poker.SessionSate
+	playerId int
 }
 
 func (m *Main) Render() *vecty.HTML {
@@ -35,7 +36,7 @@ func (m *Main) Render() *vecty.HTML {
 			),
 		),
 		elem.Div(prop.Class("content"),
-			cards.Container(),
+			cards.Container(m.state.CurrentRun.Votes[m.playerId]),
 			players.List(m.state.Players),
 		),
 	)
@@ -66,6 +67,8 @@ func main() {
 		if len(v) > 0 {
 			if id, ok := v[0].(float64); ok {
 				log.Printf("join id: %v (%T)", id, id)
+				root.playerId = int(id)
+				vecty.Rerender(root)
 			}
 		}
 	})
