@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/shurcooL/gopherjslib"
+
 	"github.com/gleroi/teampoker/poker"
 
 	"time"
@@ -28,14 +30,17 @@ func sendState(so socketio.Socket, poker *poker.Session) {
 	if err != nil {
 		log.Printf("sendState failed: serialization: %s\n", err)
 	}
+
 	err = so.Emit("state", pokerJson)
 	if err != nil {
 		log.Printf("sendState failed: %s\n", err)
 	}
-	err = so.BroadcastTo("team", "state", poker)
+
+	err = so.BroadcastTo("team", "state", pokerJson)
 	if err != nil {
 		log.Printf("sendState failed: %s\n", err)
 	}
+
 	log.Printf("state sended")
 
 	if r := recover(); r != nil {
@@ -172,6 +177,17 @@ func main() {
 		}
 		dir.ServeHTTP(w, r)
 	}
+
+	http.HandleFunc("/client.js", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "text/javascript")
+		opts := &gopherjslib.Options{
+			Minify: true,
+		}
+		err := gopherjslib.BuildPackage("client", w, opts)
+		if err != nil {
+			log.Printf("error: generating client.js: %s", err)
+		}
+	})
 
 	http.HandleFunc("/socket.io/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Access-Control-Allow-Origin", "http://localhost:8080")

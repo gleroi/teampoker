@@ -71,6 +71,7 @@ func main() {
 	})
 
 	c.On("state", func(v ...interface{}) {
+		log.Printf("state args: %+v", v)
 		stateB64, _ := v[0].(string)
 		stateJson, err := base64.StdEncoding.DecodeString(stateB64)
 		if err != nil {
