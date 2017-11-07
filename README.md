@@ -12,4 +12,7 @@ web server running a team poker planning.
 
 ## TODO GO
 
-- [ ] serve gopherjs compile from http server -> make cookie works probably.
+- [ ] implements close/reset vote (detect when every body has voted)
+- [ ] implements add/remove item
+- [ ] implements run a vote on a item
+
