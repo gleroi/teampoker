@@ -20,7 +20,7 @@ type Main struct {
 	vecty.Core
 
 	state    *poker.SessionSate
-	playerId int
+	playerId poker.PlayerId
 }
 
 func (m *Main) Render() *vecty.HTML {
@@ -37,7 +37,7 @@ func (m *Main) Render() *vecty.HTML {
 		),
 		elem.Div(prop.Class("content"),
 			cards.Container(m.state.CurrentRun.Votes[m.playerId]),
-			players.List(m.state.Players),
+			players.List(m.state),
 		),
 	)
 }
@@ -45,10 +45,10 @@ func (m *Main) Render() *vecty.HTML {
 func main() {
 	root := &Main{
 		state: &poker.SessionSate{
-			Players: make(map[int]poker.Player),
-			Items:   make(map[int]poker.Item),
+			Players: make(map[poker.PlayerId]poker.Player),
+			Items:   make(map[poker.ItemId]poker.Item),
 			CurrentRun: poker.Run{
-				Votes: make(map[int]string),
+				Votes: make(map[poker.PlayerId]string),
 			},
 		},
 	}
@@ -67,7 +67,11 @@ func main() {
 		if len(v) > 0 {
 			if id, ok := v[0].(float64); ok {
 				log.Printf("join id: %v (%T)", id, id)
-				root.playerId = int(id)
+				root.playerId = poker.PlayerId(id)
+				if name, ok := api.GetName(); ok {
+					log.Printf("poker_name: %s", name)
+					api.Rename(name)
+				}
 				vecty.Rerender(root)
 			}
 		}

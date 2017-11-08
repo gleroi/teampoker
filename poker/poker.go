@@ -4,13 +4,14 @@ package poker
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"sync"
 )
 
 type SessionSate struct {
-	Players    map[int]Player
-	Items      map[int]Item
+	Players    map[PlayerId]Player
+	Items      map[ItemId]Item
 	CurrentRun Run
 }
 
@@ -20,21 +21,25 @@ type Session struct {
 	mutex sync.Mutex
 }
 
+type PlayerId int
+
 // Player is a participant in the poker planning session
 type Player struct {
-	Id   int
+	Id   PlayerId
 	Name string
 }
+
+type ItemId int
 
 type Item struct {
 	Name     string
 	Result   string
-	Historic map[int]string
+	Historic map[PlayerId]string
 }
 
 type Run struct {
-	Item  int
-	Votes map[int]string
+	Item  ItemId
+	Votes map[PlayerId]string
 }
 
 var globalID int
@@ -55,10 +60,10 @@ func nextId() int {
 func NewSession() *Session {
 	poker := Session{
 		SessionSate: SessionSate{
-			Players: make(map[int]Player),
-			Items:   make(map[int]Item),
+			Players: make(map[PlayerId]Player),
+			Items:   make(map[ItemId]Item),
 			CurrentRun: Run{
-				Votes: make(map[int]string),
+				Votes: make(map[PlayerId]string),
 			},
 		},
 	}
@@ -99,13 +104,13 @@ func (poker *Session) Save(path string) error {
 }
 
 // NewPlayer creates a player and add it to the poker planning session
-func (poker *Session) NewPlayer(id int) Player {
+func (poker *Session) NewPlayer(id PlayerId) Player {
 	poker.mutex.Lock()
 	defer poker.mutex.Unlock()
 
-	empty := Player{}
-	p := poker.Players[id]
-	if p == empty {
+	p, ok := poker.Players[id]
+	if !ok {
+		log.Printf("NewPlayer: player %d does not exist", id)
 		p = Player{
 			Id:   id,
 			Name: "default",
@@ -118,7 +123,7 @@ func (poker *Session) NewPlayer(id int) Player {
 	return poker.Players[p.Id]
 }
 
-func (poker *Session) ChangeName(id int, name string) {
+func (poker *Session) ChangeName(id PlayerId, name string) {
 	poker.mutex.Lock()
 	defer poker.mutex.Unlock()
 
@@ -142,20 +147,21 @@ func (poker *Session) AddItem(item string) {
 	poker.mutex.Lock()
 	defer poker.mutex.Unlock()
 
-	poker.Items[nextId()] = Item{
+	itemId := ItemId(nextId())
+	poker.Items[itemId] = Item{
 		Name:   item,
 		Result: "",
 	}
 }
 
-func (poker *Session) DeleteItem(itemID int) {
+func (poker *Session) DeleteItem(itemID ItemId) {
 	poker.mutex.Lock()
 	defer poker.mutex.Unlock()
 
 	delete(poker.Items, itemID)
 }
 
-func (poker *Session) RunVote(id int) error {
+func (poker *Session) RunVote(id ItemId) error {
 	poker.mutex.Lock()
 	defer poker.mutex.Unlock()
 
@@ -165,7 +171,10 @@ func (poker *Session) RunVote(id int) error {
 	}
 	poker.CurrentRun = Run{
 		Item:  id,
-		Votes: make(map[int]string),
+		Votes: make(map[PlayerId]string),
+	}
+	for _, p := range poker.Players {
+		poker.CurrentRun.Votes[p.Id] = ""
 	}
 	return nil
 }
@@ -181,7 +190,7 @@ func (poker *Session) ResetVote() {
 	poker.mutex.Lock()
 	defer poker.mutex.Unlock()
 
-	poker.CurrentRun.Votes = make(map[int]string)
+	poker.CurrentRun.Votes = make(map[PlayerId]string)
 	for _, p := range poker.Players {
 		poker.CurrentRun.Votes[p.Id] = ""
 	}
@@ -206,7 +215,7 @@ func (poker *Session) CloseVote() {
 	poker.Items[poker.CurrentRun.Item] = item
 }
 
-func findBestVote(votes map[int]string) string {
+func findBestVote(votes map[PlayerId]string) string {
 	result := make(map[string]int)
 	for _, vote := range votes {
 		result[vote] = result[vote] + 1

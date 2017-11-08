@@ -17,11 +17,14 @@ body {
     display: flex;
     align-items: center;
     align-content: center;
-
     flex-grow: 1;
+
     width: 20%;
     margin: 7px;
     border: 2px solid green;
+
+    transition-property: background-color;
+    transition-duration: 120ms;
 }
 
 .card-selected {
@@ -67,4 +70,14 @@ body {
 .player-name {
     margin: 1px 7px;
     font-size: 1.1em;
+}
+
+.player-vote {
+    transition-property: color;
+    transition-duration: 420ms;
+    color: red;
+}
+
+.voted {
+    color: yellowgreen;
 }

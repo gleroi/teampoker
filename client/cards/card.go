@@ -26,8 +26,7 @@ func (c *CardComponent) Render() *vecty.HTML {
 }
 
 func (c *CardComponent) OnClick(e *vecty.Event) {
-	api.Vote(c.label)
-	vecty.Rerender(c)
+	api.Vote(c.label, c.selected)
 }
 
 func Card(label string, selected bool) *CardComponent {

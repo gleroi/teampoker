@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -119,11 +120,6 @@ func main() {
 		so.On("change_name", func(name string) {
 			log.Printf("change_name %d %s\n", player.Id, name)
 			session.ChangeName(player.Id, name)
-			so.Request().AddCookie(&http.Cookie{
-				Name:    "poker_name",
-				Expires: time.Now().Add(24 * time.Hour),
-				Value:   name,
-			})
 			sendState(so, session)
 		})
 
@@ -155,6 +151,15 @@ func main() {
 
 	dir := http.FileServer(http.Dir("public"))
 	handler := func(w http.ResponseWriter, r *http.Request) {
+		_, err := r.Cookie("poker")
+		if err != nil {
+			log.Printf("error /: %s", err)
+			http.SetCookie(w, &http.Cookie{
+				Name:    "poker",
+				Expires: time.Now().Add(24 * time.Hour),
+				Value:   fmt.Sprintf("%d", session.NewId()),
+			})
+		}
 		dir.ServeHTTP(w, r)
 	}
 

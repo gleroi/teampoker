@@ -14,29 +14,40 @@ import (
 // PlayerComponent displays a player/voter informations and state
 type PlayerComponent struct {
 	vecty.Core
-	name string
+	name  string
+	voted bool
 }
 
 func (p *PlayerComponent) Render() *vecty.HTML {
+	votedClass := "player-vote"
+	if p.voted {
+		votedClass = "player-vote voted fa fa-thumbs-o-up"
+	}
+
 	return elem.Div(
 		prop.Class("player"),
 		elem.Span(prop.Class("fa fa-fire player-icon")),
 		elem.Span(
 			prop.Class("player-name"),
 			vecty.Text(p.name)),
+		elem.Span(
+			prop.Class(votedClass),
+		),
 	)
 }
 
-func Player(name string) *PlayerComponent {
+func Player(name string, voted bool) *PlayerComponent {
 	return &PlayerComponent{
-		name: name,
+		name:  name,
+		voted: voted,
 	}
 }
 
 type ListComponent struct {
 	vecty.Core
 
-	players map[int]poker.Player
+	players map[poker.PlayerId]poker.Player
+	run     poker.Run
 	name    string
 }
 
@@ -55,8 +66,9 @@ func (l *ListComponent) OnRename(e *vecty.Event) {
 func (l *ListComponent) Render() *vecty.HTML {
 	players := make([]vecty.MarkupOrComponentOrHTML, 1)
 	players = append(players, prop.Class("players-list-players"))
-	for _, p := range l.players {
-		players = append(players, Player(p.Name))
+	for id, p := range l.players {
+		vote, ok := l.run.Votes[id]
+		players = append(players, Player(p.Name, ok && vote != ""))
 	}
 
 	return elem.Div(
@@ -80,8 +92,9 @@ func (l *ListComponent) Render() *vecty.HTML {
 	)
 }
 
-func List(players map[int]poker.Player) *ListComponent {
+func List(s *poker.SessionSate) *ListComponent {
 	return &ListComponent{
-		players: players,
+		players: s.Players,
+		run:     s.CurrentRun,
 	}
 }
