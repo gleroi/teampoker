@@ -56,8 +56,7 @@ func main() {
 	vecty.AddStylesheet("teampoker.css")
 	vecty.RenderBody(root)
 
-	uri := "http://localhost:8081"
-	c := socketio.New(uri)
+	c := socketio.New()
 	api.Socket = c
 	c.On("connect", func(v ...interface{}) {
 		println("connected", c.Id)

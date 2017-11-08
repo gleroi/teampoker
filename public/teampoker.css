@@ -4,13 +4,15 @@ body {
 
 .content {
     display: flex;
+    align-content: stretch;
+    flex-grow: 1;
+    align-items: stretch;
+    margin: 7px 0px;
 }
 
 .cards-container > div {
     display: flex;
     flex-wrap: wrap;  
-    margin: 13px;
-    margin-right: 300px;
 }
 
 .card {
@@ -20,7 +22,7 @@ body {
     flex-grow: 1;
 
     width: 20%;
-    margin: 7px;
+    margin: 0 7px 7px 0;
     border: 2px solid green;
 
     transition-property: background-color;
@@ -42,8 +44,6 @@ body {
 }
 
 .players-list {
-    margin: 20px 13px;
-    margin-left: -300px;
     border: 1px solid green;
 }
 

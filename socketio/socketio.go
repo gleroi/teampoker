@@ -10,8 +10,8 @@ type Socket struct {
 	Id string `js:"id"`
 }
 
-func New(url string) *Socket {
-	jsSocket := js.Global.Get("io").Invoke(url)
+func New() *Socket {
+	jsSocket := js.Global.Get("io").Invoke()
 	socket := Socket{jsSocket, ""}
 	return &socket
 }

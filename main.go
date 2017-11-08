@@ -47,16 +47,16 @@ func sendState(so socketio.Socket, poker *poker.Session) {
 	}
 }
 
-func getCookieId(request *http.Request) (int, error) {
+func getCookieId(request *http.Request) (poker.PlayerId, error) {
 	cookie, err := request.Cookie("poker")
 	if err != nil {
-		return -1, err
+		return poker.PlayerId(-1), err
 	}
 	id, err := strconv.Atoi(cookie.Value)
 	if err != nil {
-		return -1, err
+		return poker.PlayerId(-1), err
 	}
-	return id, nil
+	return poker.PlayerId(id), nil
 }
 
 func main() {
@@ -78,7 +78,7 @@ func main() {
 		id, err := getCookieId(so.Request())
 		if err != nil {
 			log.Printf("error: %s", err)
-			id = session.NewId()
+			id = poker.PlayerId(session.NewId())
 		}
 
 		player := session.NewPlayer(id)
@@ -88,7 +88,7 @@ func main() {
 		so.Emit("join", player.Id)
 		sendState(so, session)
 
-		so.On("run_vote", func(id int) {
+		so.On("run_vote", func(id poker.ItemId) {
 			err = session.RunVote(id)
 			log.Printf("run_vote pl: %d, item: %d, err: %s", player.Id, id, err)
 			sendState(so, session)
@@ -129,7 +129,7 @@ func main() {
 			sendState(so, session)
 		})
 
-		so.On("delete_item", func(itemID int) {
+		so.On("delete_item", func(itemID poker.ItemId) {
 			log.Printf("delete_item %d : %d", player.Id, itemID)
 			session.DeleteItem(itemID)
 			sendState(so, session)
@@ -175,6 +175,8 @@ func main() {
 	})
 
 	http.HandleFunc("/socket.io/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Access-Control-Allow-Origin", "http://192.168.0.41:8081")
+		w.Header().Add("Access-Control-Allow-Credentials", "true")
 		server.ServeHTTP(w, r)
 	})
 	http.HandleFunc("/", handler)
